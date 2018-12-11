@@ -7,7 +7,6 @@ from keras.layers import Dense, Dropout, Input, LSTM, Bidirectional, Masking, Em
     GlobalAveragePooling1D, TimeDistributed
 from keras.layers import BatchNormalization, Activation
 from keras.optimizers import Adam
-from attention_model import AttentionLayer
 import numpy as np
 
 max_features = 20000
@@ -26,23 +25,7 @@ print('train_label shape:', train_label.shape)
 print('test_label shape:', test_label.shape)
 
 # Audio branch
-''''
-word_input = Input(shape=(2250,64))
-word_att = Attention(4, 16)([word_input, word_input, word_input])
-word_att = BatchNormalization()(word_att)
-
-word_att1 = Attention(4, 16)([word_att, word_att, word_att])
-word_att1 = BatchNormalization()(word_att1)
-
-#word_att2 = Attention(4, 16)([word_att1, word_att1, word_att1])
-#word_att2 = BatchNormalization()(word_att2)
-#word_att2 = GlobalAveragePooling1D()(word_att2)
-
-dropout_audio = Dropout(0.5)(word_att1)
-model_frame = Model(word_input, dropout_audio)
-'''
 audio_input = Input(shape=(2250, 64))
-#word_input = TimeDistributed(model_frame)(word_input)############
 
 audio_att = Attention(4, 16)([audio_input, audio_input, audio_input])
 audio_att = BatchNormalization()(audio_att)
@@ -53,8 +36,10 @@ audio_att1 = BatchNormalization()(audio_att1)
 audio_att2 = Attention(4, 16)([audio_att1, audio_att1, audio_att1])
 audio_att2 = BatchNormalization()(audio_att2)
 
-dropout_audio = Dropout(0.5)(audio_att2)
-audio_prediction = Dense(5, activation='softmax')(dropout_audio)
+audio_att2 = GlobalAveragePooling1D()(audio_att2)
+
+dropout_audio_att2 = Dropout(0.5)(audio_att2)
+audio_prediction = Dense(5, activation='softmax')(dropout_audio_att2)
 audio_model = Model(inputs=audio_input, outputs=audio_prediction)
 inter_audio_model = Model(inputs=audio_input, outputs=audio_att2)
 adam = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
@@ -73,10 +58,12 @@ text_att1 = BatchNormalization()(text_att1)
 text_att2 = Attention(10, 20)([text_att1, text_att1, text_att1])
 text_att2 = BatchNormalization()(text_att2)
 
-dropout_text = Dropout(0.5)(text_att)
-text_prediction = Dense(5, activation='softmax')(dropout_text)
+text_att2 = GlobalAveragePooling1D()(text_att2)
+
+dropout_text_att2 = Dropout(0.5)(text_att2)
+text_prediction = Dense(5, activation='softmax')(dropout_text_att2)
 text_model = Model(inputs=text_input, outputs=text_prediction)
-inter_text_model = Model(inputs=text_input, outputs=text_att)
+inter_text_model = Model(inputs=text_input, outputs=text_att2)
 adam = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 text_model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
 
@@ -85,11 +72,11 @@ text_f_input = Input(shape=(200,))
 audio_f_input = Input(shape=(64,))
 merge = concatenate([text_f_input, audio_f_input], name='merge')
 merge = Dropout(0.5)(merge)
-d_1 = Dense(200)(merge)
+d_1 = Dense(256)(merge)
 batch_nol1 = BatchNormalization()(d_1)
 activation1 = Activation('relu')(batch_nol1)
 d_drop1 = Dropout(0.6)(activation1)
-d_2 = Dense(64)(d_drop1)
+d_2 = Dense(128)(d_drop1)
 batch_nol2 = BatchNormalization()(d_2)
 activation2 = Activation('relu')(batch_nol2)
 d_drop2 = Dropout(0.6)(activation2)
@@ -102,7 +89,7 @@ final_inter_model = Model(inputs=[text_f_input, audio_f_input], outputs=merge)
 text_acc = 0
 train_text_inter = None
 test_text_inter = None
-for i in range(50):
+for i in range(0):
     print('text branch, epoch: ', str(i))
     text_model.fit(train_text_data, train_label, batch_size=batch_size, epochs=1, verbose=1)
     loss_t, acc_t = text_model.evaluate(test_text_data, test_label, batch_size=batch_size, verbose=0)
@@ -116,7 +103,7 @@ for i in range(50):
 audio_acc = 0
 train_audio_inter = None
 test_audio_inter = None
-for i in range(50):
+for i in range(1):
     print('audio branch, epoch: ', str(i))
     audio_model.fit(train_audio_data, train_label, batch_size=batch_size, epochs=1, verbose=1)
     loss_a, acc_a = audio_model.evaluate(test_audio_data, test_label, batch_size=batch_size, verbose=0)
