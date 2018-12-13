@@ -8,3 +8,4 @@ fru     {'ang': 36,  'hap_exc': 12,  'sad': 14,  'fru': 287, 'neu': 21}
 neu     {'ang': 7,   'hap_exc': 15,  'sad': 28,  'fru': 41,  'neu': 233}
 </pre>
 
+
