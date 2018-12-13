@@ -35,6 +35,7 @@ audio_input = Input(shape=(513, 64))
 print('audio_input shape: ', audio_input.shape)
 audio_att = Attention(4, 16)([audio_input, audio_input, audio_input])
 audio_att = BatchNormalization()(audio_att)
+
 audio_att = Attention(4, 16)([audio_att, audio_att, audio_att])
 audio_att = BatchNormalization()(audio_att)
 
@@ -48,8 +49,10 @@ model_frame = Model(audio_input, dropout_audio)
 
 word_input = Input(shape=(98, 513, 64))
 print('word_input shape: ', word_input.shape)
+
 audio_input = TimeDistributed(model_frame)(word_input)
-word_att = Attention(4, 16)([audio_input, audio_input, audio_input])
+
+word_att = Attention(4, 16)([audio_input, audio_input, audio_input])#6，8
 word_att = BatchNormalization()(word_att)
 word_att = Attention(4, 16)([word_att, word_att, word_att])
 word_att = BatchNormalization()(word_att)
@@ -96,6 +99,7 @@ audio_f_input = Input(shape=(98,64))  # 50，    #98,200      #98,
 text_f_input = Input(shape=(98,200))  # ，64 #98,200      #98,513,64
 merge = concatenate([text_f_input, audio_f_input], name='merge')
 merge = Dropout(0.5)(merge)
+
 print('merge shape: ', merge.shape)    # (?,98,264)
 
 merge_weight1 = Attention(10,20)([merge,merge,merge])
@@ -210,6 +214,7 @@ for i in range(0):
     final_model.fit([train_text_inter, train_audio_inter], train_label, batch_size=batch_size, epochs=1)
     loss_f, acc_f = final_model.evaluate([test_text_inter, test_audio_inter], test_label, batch_size=batch_size,
                                          verbose=0)
+
     print('epoch: ', str(i))
     print('loss_f', loss_f, ' ', 'acc_f', acc_f)
     if acc_f >= final_acc:
@@ -220,14 +225,13 @@ for i in range(0):
         test_fusion_weight = final_inter_model.predict([test_text_inter, test_audio_inter], batch_size=batch_size)
         result = np.argmax(result, axis=1)
 
-#r_0, r_1, r_2, r_3, r_4 = analyze_data(test_label_o, result)
+    final_model.predict([test_text_inter, test_audio_inter], batch_size=batch_size)
+
+r_0, r_1, r_2, r_3, r_4 = analyze_data(test_label_o, result)
 print('final result: ')
-print('text acc',text_acc)
-'''
 print('text acc: ', text_acc, ' audio acc: ', audio_acc, ' final acc: ', final_acc)
-print("0", r_0)
-print("1", r_1)
-print("2", r_2)
-print("3", r_3)
-print("4", r_4)
-'''
+print("ang", r_0)
+print("hap_exc", r_1)
+print("sad", r_2)
+print("fru", r_3)
+print("neu", r_4)

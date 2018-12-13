@@ -170,11 +170,11 @@ def seperate_dataset(audio_data, text_data, label):
 
 
 def analyze_data(test_label, result):
-    r_0 = {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0}
-    r_1 = {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0}
-    r_2 = {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0}
-    r_3 = {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0}
-    r_4 = {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0}
+    r_0 = {'ang': 0, 'hap_exc': 0, 'sad': 0, 'fru': 0, 'neu': 0}
+    r_1 = {'ang': 0, 'hap_exc': 0, 'sad': 0, 'fru': 0, 'neu': 0}
+    r_2 = {'ang': 0, 'hap_exc': 0, 'sad': 0, 'fru': 0, 'neu': 0}
+    r_3 = {'ang': 0, 'hap_exc': 0, 'sad': 0, 'fru': 0, 'neu': 0}
+    r_4 = {'ang': 0, 'hap_exc': 0, 'sad': 0, 'fru': 0, 'neu': 0}
 
     i = 0
     while i < len(test_label):  # 4
