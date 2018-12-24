@@ -240,6 +240,7 @@ def get_data():
     text_data = get_text_data(text_path, dic)
     train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label_o = seperate_dataset(
         audio_data, text_data, label)
+    #print train_text_data,test_text_data or write into the txt files
     train_label = to_categorical(train_label, num_classes=numclass)
     train_text_data = sequence.pad_sequences(train_text_data, padding='post', truncating='post', maxlen=maxlen)
     test_label = to_categorical(test_label_o, num_classes=numclass)

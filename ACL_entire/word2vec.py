@@ -55,7 +55,7 @@ def embed_onehot(dictionary, data):
             index = dictionary[word]
         else:
             index = 0
-        result.append(index)
+        result.append(index)#result.append(word)
     return result
 
 
