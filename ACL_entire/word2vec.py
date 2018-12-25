@@ -51,11 +51,12 @@ def get_dictionary(path):
 def embed_onehot(dictionary, data):
     result = []
     for word in data.split():
-        if word in dictionary:
-            index = dictionary[word]
-        else:
-            index = 0
-        result.append(index)#result.append(word)
+        #if word in dictionary:
+        #    index = dictionary[word]
+        #else:
+        #    index = 0
+        #result.append(index)
+        result.append(word)
     return result
 
 
