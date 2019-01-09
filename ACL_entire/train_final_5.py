@@ -74,6 +74,7 @@ text_att1 = BatchNormalization()(text_att1)
 
 text_att2 = Attention(10, 20)([text_att1, text_att1, text_att1])
 text_att2 = BatchNormalization()(text_att2)
+
 print('text_att2',text_att2.shape)
 text_att_gap = GlobalAveragePooling1D()(text_att2)
 dropout_text_gap = Dropout(0.5)(text_att_gap)
@@ -157,15 +158,16 @@ final_inter_model = Model(inputs=[text_f_input, audio_f_input], outputs=merge_we
 text_acc = 0
 train_text_inter = None
 test_text_inter = None
-for i in range(0):
+for i in range(50):
     print('text branch, epoch: ', str(i))
-    text_model.fit(train_text_data, train_label, batch_size=batch_size, epochs=1, verbose=1)
+    train_dt, train_lt = shuffle(train_text_data, train_label)
+    text_model.fit(train_dt, train_lt, batch_size=batch_size, epochs=1, verbose=1)
     loss_t, acc_t = text_model.evaluate(test_text_data, test_label, batch_size=batch_size, verbose=0)
     print('epoch: ', str(i))
     print('loss_t', loss_t, ' ', 'acc_t', acc_t)
     if acc_t >= text_acc:
         text_acc = acc_t
-        train_text_inter = inter_text_model.predict(train_text_data, batch_size=batch_size)
+        train_text_inter = inter_text_model.predict(train_dt, batch_size=batch_size)
         test_text_inter = inter_text_model.predict(test_text_data, batch_size=batch_size)
         text_model.save_weights(r'E:\Yue\Code\ACL_entire\text_model\\text_model.h5')
         inter_text_model.save_weights(r'E:\Yue\Code\ACL_entire\text_model\\inter_text_model.h5')
@@ -173,9 +175,9 @@ for i in range(0):
 #text_model.load_weights(r'E:\Yue\Code\ACL_entire\text_model\\text_model.h5')
 #loss_t, acc_t = text_model.evaluate(test_text_data, test_label, batch_size=batch_size, verbose=0)
 #text_acc = acc_t
-inter_text_model.load_weights(r'E:\Yue\Code\ACL_entire\text_model\\inter_text_model.h5')
-train_text_inter = inter_text_model.predict(train_text_data, batch_size=batch_size)
-test_text_inter = inter_text_model.predict(test_text_data, batch_size=batch_size)
+#inter_text_model.load_weights(r'E:\Yue\Code\ACL_entire\text_model\\inter_text_model.h5')
+#train_text_inter = inter_text_model.predict(train_text_data, batch_size=batch_size)
+#test_text_inter = inter_text_model.predict(test_text_data, batch_size=batch_size)
 
 train_audio_inter = None
 test_audio_inter = None
