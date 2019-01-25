@@ -231,21 +231,6 @@ def get_hier_mat_data():
         res.append(i)
         i += 1
     return res
-
-def check(train_data,test_data):
-    f = open('train_data.txt', 'w')
-    for list in train_data:
-        for i in range(len(list)):
-            f.write(str(list[i]) + ' ')
-        f.write('\n')
-    f.close()
-    f1 = open('test_data.txt', 'w')
-    for list1 in test_data:
-        for i1 in range(len(list1)):
-            f1.write(str(list1[i1]) + ' ')
-        f1.write('\n')
-    f1.close()
-
 def get_data():
     dic = get_dictionary(dic_path)
     embed_matrix = initial_embed(dic, embed_path)
@@ -255,7 +240,6 @@ def get_data():
     text_data = get_text_data(text_path, dic)
     train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label_o = seperate_dataset(
         audio_data, text_data, label)
-    check(train_text_data,test_text_data)
     train_label = to_categorical(train_label, num_classes=numclass)
     train_text_data = sequence.pad_sequences(train_text_data, padding='post', truncating='post', maxlen=maxlen)
     test_label = to_categorical(test_label_o, num_classes=numclass)

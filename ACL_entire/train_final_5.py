@@ -74,7 +74,6 @@ text_att1 = BatchNormalization()(text_att1)
 
 text_att2 = Attention(10, 20)([text_att1, text_att1, text_att1])
 text_att2 = BatchNormalization()(text_att2)
-
 print('text_att2',text_att2.shape)
 text_att_gap = GlobalAveragePooling1D()(text_att2)
 dropout_text_gap = Dropout(0.5)(text_att_gap)
@@ -158,31 +157,25 @@ final_inter_model = Model(inputs=[text_f_input, audio_f_input], outputs=merge_we
 text_acc = 0
 train_text_inter = None
 test_text_inter = None
-for i in range(50):
+for i in range(100):
     print('text branch, epoch: ', str(i))
-    train_dt, train_lt = shuffle(train_text_data, train_label)
-    text_model.fit(train_dt, train_lt, batch_size=batch_size, epochs=1, verbose=1)
+    text_model.fit(train_text_data, train_label, batch_size=batch_size, epochs=1, verbose=1)
     loss_t, acc_t = text_model.evaluate(test_text_data, test_label, batch_size=batch_size, verbose=0)
     print('epoch: ', str(i))
     print('loss_t', loss_t, ' ', 'acc_t', acc_t)
     if acc_t >= text_acc:
         text_acc = acc_t
-        train_text_inter = inter_text_model.predict(train_dt, batch_size=batch_size)
+        train_text_inter = inter_text_model.predict(train_text_data, batch_size=batch_size)
         test_text_inter = inter_text_model.predict(test_text_data, batch_size=batch_size)
         text_model.save_weights(r'E:\Yue\Code\ACL_entire\text_model\\text_model.h5')
         inter_text_model.save_weights(r'E:\Yue\Code\ACL_entire\text_model\\inter_text_model.h5')
 
-#text_model.load_weights(r'E:\Yue\Code\ACL_entire\text_model\\text_model.h5')
-#loss_t, acc_t = text_model.evaluate(test_text_data, test_label, batch_size=batch_size, verbose=0)
-#text_acc = acc_t
-#inter_text_model.load_weights(r'E:\Yue\Code\ACL_entire\text_model\\inter_text_model.h5')
-#train_text_inter = inter_text_model.predict(train_text_data, batch_size=batch_size)
-#test_text_inter = inter_text_model.predict(test_text_data, batch_size=batch_size)
-
 train_audio_inter = None
 test_audio_inter = None
 audio_acc = 0
-for i in range(0):
+audio_model.load_weights(r'E:\Yue\Code\ACL_entire\audio_model\audio_model.h5')
+inter_audio_model.load_weights(r'E:\Yue\Code\ACL_entire\audio_model\inter_audio_model.h5')
+for i in range(20):
     print('audio branch, epoch: ', str(i))
     train_d, train_l = shuffle(train_audio_data, train_label)
     audio_model.fit_generator(data_generator(audio_path, train_d, train_l, len(train_d)),
@@ -201,24 +194,11 @@ for i in range(0):
         test_audio_inter = inter_audio_model.predict_generator(
             data_generator_output(audio_path, test_audio_data, test_label,len(test_audio_data)),steps=len(test_audio_data))
 
-#audio_model.load_weights(r'E:\Yue\Code\ACL_entire\audio_model\audio_model1.h5')
-inter_audio_model.load_weights(r'E:\Yue\Code\ACL_entire\audio_model\inter_audio_model1.h5')
-train_audio_inter = inter_audio_model.predict_generator(
-            data_generator_output(audio_path, train_audio_data, train_label,len(train_audio_data)),steps=len(train_audio_data))
-test_audio_inter = inter_audio_model.predict_generator(
-            data_generator_output(audio_path, test_audio_data, test_label,len(test_audio_data)),steps=len(test_audio_data))
-#loss_a, acc_a = audio_model.evaluate_generator(
-#    data_generator(audio_path, test_audio_data, test_label, len(test_audio_data)),
-#    steps=len(test_audio_data) / 4)
-#audio_acc = acc_a
+
 
 final_acc = 0
 result = None
-final_model.load_weights(r'E:\Yue\Code\ACL_entire\final_model\final_model.h5')
-loss_f, acc_f = final_model.evaluate([test_text_inter, test_audio_inter], test_label, batch_size=batch_size, verbose=0)
-final_acc = acc_f
-final_inter_model.load_weights(r'E:\Yue\Code\ACL_entire\final_model\final_inter_model.h5')
-for i in range(10):
+for i in range(0):
     print('fusion branch, epoch: ', str(i))
     final_model.fit([train_text_inter, train_audio_inter], train_label, batch_size=batch_size, epochs=1)
     loss_f, acc_f = final_model.evaluate([test_text_inter, test_audio_inter], test_label, batch_size=batch_size,
@@ -232,7 +212,8 @@ for i in range(10):
         result = final_model.predict([test_text_inter, test_audio_inter], batch_size=batch_size)
         test_fusion_weight = final_inter_model.predict([test_text_inter, test_audio_inter], batch_size=batch_size)
         result = np.argmax(result, axis=1)
-
+#print('text acc',text_acc)
+'''
 r_0, r_1, r_2, r_3, r_4 = analyze_data(test_label_o, result)
 print('final result: ')
 print('text acc: ', text_acc, ' audio acc: ', audio_acc, ' final acc: ', final_acc)
@@ -241,3 +222,4 @@ print("1", r_1)
 print("2", r_2)
 print("3", r_3)
 print("4", r_4)
+'''
