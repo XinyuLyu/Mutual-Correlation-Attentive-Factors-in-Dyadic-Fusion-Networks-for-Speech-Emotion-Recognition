@@ -63,7 +63,7 @@ audio_model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['a
 
 # Text Branch
 text_input = Input(shape=(98,))
-em_text = Embedding(len(dic) + 1, 200, weights=[embed_matrix], trainable=True)(text_input)
+em_text = Embedding(len(dic) + 1, 200, weights=[embed_matrix], trainable=True)(text_input)   #change input
 em_text = Position_Embedding()(em_text)
 
 text_att = Attention(10, 20)([em_text, em_text, em_text])

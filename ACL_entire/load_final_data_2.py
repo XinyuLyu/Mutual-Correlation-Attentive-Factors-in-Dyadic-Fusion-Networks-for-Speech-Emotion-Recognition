@@ -61,13 +61,15 @@ def get_mat_data(path):
 def get_text_data(path, dic):
     f = open(path, 'r')
     res = []
+    fortoke=[]
     i = 0
     for line in f:
+        fortoke.append(str.lower((line.translate(str.maketrans('', '', string.punctuation)))[0:-1]))
         text = embed_onehot(dic, line.translate(str.maketrans('', '', string.punctuation)))
         res.append(text)
         i += 1
     f.close()
-    return res
+    return res,fortoke
 
 
 def seprate_by_emotion(path, data):
@@ -237,7 +239,7 @@ def get_data():
     label = get_label(label_path)
     #audio_data = get_mat_data(audio_path)
     audio_data = get_hier_mat_data()
-    text_data = get_text_data(text_path, dic)
+    text_data, token_pre = get_text_data(text_path, dic)
     train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label_o = seperate_dataset(
         audio_data, text_data, label)
     train_label = to_categorical(train_label, num_classes=numclass)
