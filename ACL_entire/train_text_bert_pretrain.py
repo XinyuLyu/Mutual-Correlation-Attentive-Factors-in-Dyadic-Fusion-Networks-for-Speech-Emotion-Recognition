@@ -32,17 +32,14 @@
 #
 from __future__ import print_function
 from self_attention import Attention, Position_Embedding
-from test_load_data import get_data, analyze_data, data_generator, data_generator_output  # process_train_data
+from test_load_data import get_data, data_generator, data_generator_output  # process_train_data
 from keras.models import Model
-from keras.layers import Dense, Dropout, Input, Masking, Embedding, concatenate, \
-    GlobalAveragePooling1D, Conv1D, GlobalMaxPooling1D, Lambda, TimeDistributed, Bidirectional, LSTM
+from keras.layers import Dense, Dropout, Input, concatenate, \
+    GlobalAveragePooling1D, Conv1D, GlobalMaxPooling1D, TimeDistributed
 from keras.layers import BatchNormalization, Activation
 from keras.optimizers import Adam
 import numpy as np
-from keras import backend
 from sklearn.utils import shuffle
-from sklearn import preprocessing
-from attention_model import AttentionLayer
 
 max_features = 20000
 batch_size = 16

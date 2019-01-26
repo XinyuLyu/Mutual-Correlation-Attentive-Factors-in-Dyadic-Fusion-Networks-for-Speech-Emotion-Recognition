@@ -242,9 +242,9 @@ def get_data():
     text_data, token_data = get_text_data(text_path, dic)
     train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label_o = seperate_dataset(
         audio_data, text_data, label)
-    orig_label=to_categorical(label, num_classes=numclass)
+    #orig_label=to_categorical(label, num_classes=numclass)
     train_label = to_categorical(train_label, num_classes=numclass)
     train_text_data = sequence.pad_sequences(train_text_data, padding='post', truncating='post', maxlen=maxlen)
     test_label = to_categorical(test_label_o, num_classes=numclass)
     test_text_data = sequence.pad_sequences(test_text_data, padding='post', truncating='post', maxlen=maxlen)
-    return train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label, test_label_o, embed_matrix, dic, token_data, orig_label
+    return train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label, test_label_o, embed_matrix, dic, token_data#, orig_label
