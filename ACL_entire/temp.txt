@@ -1,0 +1,94 @@
+
+train_audio_inter = None
+test_audio_inter = None
+audio_acc = 0
+'''
+audio_model.load_weights(r'E:\Yue\Code\ACL_entire\audio_model\audio_model_1_25.h5')
+inter_audio_model.load_weights(r'E:\Yue\Code\ACL_entire\audio_model\inter_audio_model_1_25.h5')
+loss_a, acc_a = audio_model.evaluate_generator(
+    data_generator(audio_path, test_audio_data, test_label, len(test_audio_data)),
+    steps=len(test_audio_data) / 4)
+audio_acc = acc_a
+train_audio_inter = inter_audio_model.predict_generator(
+    data_generator_output(audio_path, train_audio_data, train_label, len(train_audio_data)),
+    steps=len(train_audio_data))
+test_audio_inter = inter_audio_model.predict_generator(
+    data_generator_output(audio_path, test_audio_data, test_label, len(test_audio_data)), steps=len(test_audio_data))
+'''
+'''
+epoch = []
+loss  = []
+time = []
+'''
+for i in range(0):
+    print('audio branch, epoch: ', str(i))
+    train_d, train_l = shuffle(train_audio_data, train_label)
+    start_time = datetime.datetime.now()
+    audio_model.fit_generator(data_generator(audio_path, train_d, train_l, len(train_d)),
+                              steps_per_epoch=len(train_d) / 4, epochs=1, verbose=1)
+    end_time = datetime.datetime.now()
+    #time.append((end_time-start_time).seconds)
+
+    loss_a, acc_a = audio_model.evaluate_generator(
+        data_generator(audio_path, test_audio_data, test_label, len(test_audio_data)),
+        steps=len(test_audio_data) / 4)
+    print('epoch: ', str(i))
+    print('loss_a', loss_a, ' ', 'acc_a', acc_a)
+    epoch.append(i)
+    loss.append(loss_a)
+
+    if acc_a >= audio_acc:
+        audio_model.save_weights(r'E:\Yue\Code\ACL_entire\audio_model\audio_model_1_27.h5')
+        inter_audio_model.save_weights(r'E:\Yue\Code\ACL_entire\audio_model\inter_audio_model_1_27.h5')
+        audio_acc = acc_a
+        train_audio_inter = inter_audio_model.predict_generator(
+            data_generator_output(audio_path, train_audio_data, train_label, len(train_audio_data)),
+            steps=len(train_audio_data))
+        test_audio_inter = inter_audio_model.predict_generator(
+            data_generator_output(audio_path, test_audio_data, test_label, len(test_audio_data)),
+            steps=len(test_audio_data))
+'''
+plt.figure()
+plt.plot(epoch, loss)
+plt.xlabel("epoch")
+plt.ylabel("loss")
+print(audio_acc)
+print ('average runtime for per epoch',np.mean(time))
+'''
+final_acc = 0
+result = None
+for i in range(0):
+    print('fusion branch, epoch: ', str(i))
+    final_model.fit([train_text_inter, train_audio_inter], train_label, batch_size=batch_size, epochs=1)
+    loss_f, acc_f = final_model.evaluate([test_text_inter, test_audio_inter], test_label, batch_size=batch_size,
+                                         verbose=0)
+    print('epoch: ', str(i))
+    print('loss_f', loss_f, ' ', 'acc_f', acc_f)
+    if acc_f >= final_acc:
+        final_model.save_weights(r'E:\Yue\Code\ACL_entire\fusion_model\fusion_model_1_26.h5')
+        final_inter_model.save_weights(r'E:\Yue\Code\ACL_entire\fusion_model\fusion_inter_model_1_26.h5')
+        final_acc = acc_f
+        result = final_model.predict([test_text_inter, test_audio_inter], batch_size=batch_size)
+        test_fusion_weight = final_inter_model.predict([test_text_inter, test_audio_inter], batch_size=batch_size)
+        result = np.argmax(result, axis=1)
+'''
+final_model.load_weights(r'E:\Yue\Code\ACL_entire\final_model\final_model.h5')
+final_inter_model.load_weights(r'E:\Yue\Code\ACL_entire\final_model\final_inter_model.h5')
+loss_f, acc_f = final_model.evaluate([test_text_inter, test_audio_inter], test_label, batch_size=batch_size,
+                                     verbose=0)
+final_acc = acc_f
+result = final_model.predict([test_text_inter, test_audio_inter], batch_size=batch_size)
+test_fusion_weight = final_inter_model.predict([test_text_inter, test_audio_inter], batch_size=batch_size)
+result = np.argmax(result, axis=1)
+'''
+
+'''
+r_0, r_1, r_2, r_3, r_4 = analyze_data(test_label_o, result)
+print('final result: ')
+print('text acc: ', text_acc, ' audio acc: ', audio_acc, ' final acc: ', final_acc)
+print("0", r_0)
+print("1", r_1)
+print("2", r_2)
+print("3", r_3)
+print("4", r_4)
+'''

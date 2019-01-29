@@ -12,7 +12,7 @@ label_path = r'E:/Yue/Entire Data/ACL_2018_entire/label_output_new.txt'
 audio_path = r'E:/Yue/Entire Data/ACL_2018_entire/Word_Mat_New_1/'
 text_path = r'E:/Yue/Entire Data/ACL_2018_entire/text_output_new.txt'
 embed_path = r'E:/Yue/Entire Data/ACL_2018_entire/'
-maxlen = 98
+maxlen = 50
 numclass = 5
 num = 7204
 
@@ -62,12 +62,14 @@ def get_text_data(path, dic):
     f = open(path, 'r')
     res = []
     i = 0
+    fortoken = []
     for line in f:
+        fortoken.append(str.lower((line.translate(str.maketrans('', '', string.punctuation)))[0:-1]))
         text = embed_onehot(dic, line.translate(str.maketrans('', '', string.punctuation)))
         res.append(text)
         i += 1
     f.close()
-    return res
+    return res, fortoken
 
 
 def seprate_by_emotion(path, data):
@@ -231,34 +233,18 @@ def get_hier_mat_data():
         res.append(i)
         i += 1
     return res
-
-def check(train_data,test_data):
-    f = open('train_data.txt', 'w')
-    for list in train_data:
-        for i in range(len(list)):
-            f.write(str(list[i]) + ' ')
-        f.write('\n')
-    f.close()
-    f1 = open('test_data.txt', 'w')
-    for list1 in test_data:
-        for i1 in range(len(list1)):
-            f1.write(str(list1[i1]) + ' ')
-        f1.write('\n')
-    f1.close()
-    print("finish")
 def get_data():
     dic = get_dictionary(dic_path)
     embed_matrix = initial_embed(dic, embed_path)
     label = get_label(label_path)
     #audio_data = get_mat_data(audio_path)
     audio_data = get_hier_mat_data()
-    text_data = get_text_data(text_path, dic)
+    text_data, token_data = get_text_data(text_path, dic)
     train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label_o = seperate_dataset(
         audio_data, text_data, label)
-    check(train_text_data,test_text_data)
-    '''
+    orig_label=to_categorical(label, num_classes=numclass)
     train_label = to_categorical(train_label, num_classes=numclass)
     train_text_data = sequence.pad_sequences(train_text_data, padding='post', truncating='post', maxlen=maxlen)
     test_label = to_categorical(test_label_o, num_classes=numclass)
     test_text_data = sequence.pad_sequences(test_text_data, padding='post', truncating='post', maxlen=maxlen)
-    return train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label, test_label_o, embed_matrix, dic'''
+    return train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label, test_label_o, embed_matrix, dic, token_data, orig_label

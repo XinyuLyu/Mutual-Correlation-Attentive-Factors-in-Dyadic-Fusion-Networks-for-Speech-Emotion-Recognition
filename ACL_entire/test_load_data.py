@@ -5,7 +5,7 @@ import numpy as np
 import random
 import string
 import scipy.io as scio
-
+from sklearn.utils import shuffle
 label_category = ['ang', 'exc', 'sad', 'fru', 'hap', 'neu']
 dic_path = r'E:/Yue/Entire Data/ACL_2018_entire/dictionary_new.txt'
 label_path = r'E:/Yue/Entire Data/ACL_2018_entire/label_output_new.txt'
@@ -168,6 +168,8 @@ def seperate_dataset(audio_data, text_data, label):
             test_label.append(neu_label[neu_i])
         neu_i += 1
 
+    train_audio_data, train_text_data, train_label = shuffle(train_audio_data, train_text_data, train_label)
+    test_audio_data, test_text_data, test_label = shuffle(test_audio_data, test_text_data, test_label)
     return train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label
 
 
