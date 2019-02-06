@@ -36,6 +36,7 @@ audio_att = Attention(4, 16)([audio_att, audio_att, audio_att])
 audio_att = BatchNormalization()(audio_att)
 
 audio_att_gap = GlobalAveragePooling1D()(audio_att)
+# 训练中更新时，每次随机丢弃50%, 防止过拟合
 dropout_audio = Dropout(0.5)(audio_att_gap)
 model_frame = Model(audio_input, dropout_audio)
 
