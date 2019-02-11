@@ -45,17 +45,22 @@ class Attention(Layer):
 
     def build(self, input_shape):
         self.WQ = self.add_weight(name='WQ',
-                                  shape=(input_shape[0][-1], self.output_dim),
+                                  shape=(input_shape[0][-1], self.size_per_head),
                                   initializer='glorot_uniform',
                                   trainable=True)
         self.WK = self.add_weight(name='WK',
-                                  shape=(input_shape[1][-1], self.output_dim),
+                                  shape=(input_shape[1][-1], self.size_per_head),
                                   initializer='glorot_uniform',
                                   trainable=True)
         self.WV = self.add_weight(name='WV',
-                                  shape=(input_shape[2][-1], self.output_dim),
+                                  shape=(input_shape[2][-1], self.size_per_head),
                                   initializer='glorot_uniform',
                                   trainable=True)
+        self.WO = self.add_weight(name='WO',
+                                  shape=(self.output_dim,input_shape[0][-1]),
+                                  initializer='glorot_uniform',
+                                  trainable=True
+                                  )
         super(Attention, self).build(input_shape)
 
     def Mask(self, inputs, seq_len, mode='mul'):
@@ -74,56 +79,53 @@ class Attention(Layer):
     def call(self, x):
         # 如果只传入Q_seq,K_seq,V_seq，那么就不做Mask
         # 如果同时传入Q_seq,K_seq,V_seq,Q_len,V_len，那么对多余部分做Mask
-        if len(x) == 3:
+        O_seq_list = []
+        for i in range(self.nb_head):
             Q_seq, K_seq, V_seq = x
             Q_len, V_len = None, None
-        elif len(x) == 5:
-            Q_seq, K_seq, V_seq, Q_len, V_len = x
-        # 对Q、K、V做线性变换
-        print('Q_seq,K_seq,V_seq', Q_seq.shape)   #(?, 50, 200)
-        print('WQ', self.WQ.shape, 'WK', self.WK.shape, ' WV', self.WV.shape)   #(200, 200)，(200, 200)，(200, 200)
-        Q_seq = K.dot(Q_seq, self.WQ)
-        print('Q_seq after dot', Q_seq.shape)  #(?, 50, 200)
-        Q_seq = K.reshape(Q_seq, (-1, K.shape(Q_seq)[1], self.nb_head, self.size_per_head))
-        print('Q_seq after reshape', Q_seq.shape)  #(?, ?, 10, 20)
-        Q_seq = K.permute_dimensions(Q_seq, (0, 2, 1, 3))
-        print('Q_seq after permute_dimensions',Q_seq.shape)   #(?, 10, ?, 20)
 
-        K_seq = K.dot(K_seq, self.WK)
-        print('K_seq after dot', K_seq.shape)   #(?, 50, 200)
-        K_seq = K.reshape(K_seq, (-1, K.shape(K_seq)[1], self.nb_head, self.size_per_head))
-        print('K_seq after reshape', K_seq.shape)   #(?, ?, 10, 20)
-        K_seq = K.permute_dimensions(K_seq, (0, 2, 1, 3))
-        print('K_seq after permute_dimensions', K_seq.shape)   #(?, 10, ?, 20)
+            Q_seq = K.dot(Q_seq, self.WQ)  #(?,50,20)
+            #print('Q_seq',Q_seq.shape)
+            #Q_seq = K.reshape(Q_seq, (-1, K.shape(Q_seq)[1], self.nb_head, self.size_per_head))
+            #Q_seq = K.permute_dimensions(Q_seq, (0, 2, 1, 3))
 
-        V_seq = K.dot(V_seq, self.WV)
-        print('V_seq after dot', V_seq.shape)   #(?, 50, 200)
-        V_seq = K.reshape(V_seq, (-1, K.shape(V_seq)[1], self.nb_head, self.size_per_head))   # 10，20
-        print('V_seq after reshape', V_seq.shape)   #(?, ?, 10, 20)
-        V_seq = K.permute_dimensions(V_seq, (0, 2, 1, 3))
-        print('V_seq after permute_dimensions', V_seq.shape)   #(?, 10, ?, 20)
+            K_seq = K.dot(K_seq, self.WK)  #(?,50,20)
+            #print('K_seq', K_seq.shape)
+            #K_seq = K.reshape(K_seq, (-1, K.shape(K_seq)[1], self.nb_head, self.size_per_head))
+            #K_seq = K.permute_dimensions(K_seq, (0, 2, 1, 3))
 
-        # 计算内积，然后mask，然后softmax
-        A = K.batch_dot(Q_seq, K_seq, axes=[3, 3]) / self.size_per_head ** 0.5
-        print('A after dot between Q_seq and K_seq', A.shape)  #(?, 10, ?, ?)
-        A = K.permute_dimensions(A, (0, 3, 2, 1))
-        print('A after permute_dimensions', A.shape)   #(?, ?, ?, 10)
-        A = self.Mask(A, V_len, 'add')
-        print('A after Mask', A.shape)   #(?, ?, ?, 10)
-        A = K.permute_dimensions(A, (0, 3, 2, 1))
-        print('A after permute_dimensions', A.shape)   #(?, 10, ?, ?)
-        A = K.softmax(A)
-        print('A after softmax', A.shape)   #(?, 10, ?, ?)
-        # 输出并mask
-        O_seq = K.batch_dot(A, V_seq, axes=[3, 2])
-        print('O_seq after dot between A and V_seq', O_seq.shape)   #(?, 10, ?, 20)
-        O_seq = K.permute_dimensions(O_seq, (0, 2, 1, 3))
-        print('O_seq after permute_dinsions', O_seq.shape)   #(?, ?, 10, 20)
-        O_seq = K.reshape(O_seq, (-1, K.shape(O_seq)[1], self.output_dim))   #200
-        print('O_seq after reshape',O_seq.shape)   #(?, ?, 200)
-        O_seq = self.Mask(O_seq, Q_len, 'mul')
-        print('O_seq after mask',O_seq.shape)   #(?, ?, 200) ?
+            V_seq = K.dot(V_seq, self.WV)  #(?,50,20)
+            #print('V_seq', V_seq.shape)
+            #V_seq = K.reshape(V_seq, (-1, K.shape(V_seq)[1], self.nb_head, self.size_per_head))
+            #V_seq = K.permute_dimensions(V_seq, (0, 2, 1, 3))
+
+
+            # 计算内积，然后mask，然后softmax
+            #A = K.dot(Q_seq, K_seq) / self.size_per_head ** 0.5
+            A = K.batch_dot(Q_seq, K_seq,axes=[2,2]) / self.size_per_head ** 0.5
+            #print('Q dot K.transpose',A.shape)#(?,50,50)
+            #A = K.permute_dimensions(A, (0, 3, 2, 1))
+            #A = self.Mask(A, V_len, 'add')
+            #A = K.permute_dimensions(A, (0, 3, 2, 1))
+            A = K.softmax(A)#(?,50,50)
+            #print('after softmax', A.shape)
+
+            # 输出并mask
+            O_seq = K.batch_dot(A, V_seq, axes=[2, 1])#(?,50,20)
+            #print('after dot with V',O_seq.shape)
+            #O_seq = K.permute_dimensions(O_seq, (0, 2, 1, 3))
+            #O_seq = K.reshape(O_seq, (-1, K.shape(O_seq)[1], self.output_dim))
+            #O_seq = self.Mask(O_seq, Q_len, 'mul')
+            O_seq_list.append(O_seq)
+
+        #concat
+        O_seq_concat = O_seq_list[0]
+        for i in range(1, len(O_seq_list)):
+            O_seq_concat = K.concatenate([O_seq_concat, O_seq_list[i]])
+        #print('after concat',O_seq_concat.shape)
+        O_seq = K.dot(O_seq_concat,self.WO)
+        #print('after dot with WO',O_seq.shape)
         return O_seq
 
     def compute_output_shape(self, input_shape):
-        return (input_shape[0][0], input_shape[0][1], self.output_dim)
+        return (input_shape[0][0], input_shape[0][1], input_shape[0][-1])

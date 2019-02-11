@@ -10,7 +10,7 @@ print("Connecting:\n")
 a=bc.encode(tokenpre)
 print(a,"\n",a.shape,"\n")
 import numpy as np
-np.save('bert_text_pretrained_feather_word_embedding_max_sep_len=50.npy',a)
+np.save('bert_text_pretrained_feather_Cased_768_word_embedding_max_sep_len=98.npy',a)
 #import numpy as np
 #bert_con3=np.load("bert_text_pretrained_feather_word_embedding_con3.npy")
 #bert_5=np.load("bert_text_pretrained_feather_word_embedding_5.npy")

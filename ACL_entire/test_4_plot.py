@@ -145,8 +145,8 @@ text_acc = 0
 train_text_inter = None
 test_text_inter = None
 size = 50
-epoch = np.linspace(0,size,size+1)
-#epoch = np.linspace(1,size,size)
+epoch = np.linspace(0,size,size+1) #load
+#epoch = np.linspace(1,size,size) # no load
 loss = []
 acc = []
 
@@ -161,7 +161,7 @@ test_text_inter = inter_text_model.predict(test_text_data, batch_size=batch_size
 print('loss', loss)
 print('acc', acc)
 
-'''
+
 for i in range(size):
     print('text branch, epoch: ', str(i))
     data_, label_ = shuffle(train_text_data, train_label)
@@ -176,8 +176,8 @@ for i in range(size):
         text_acc = acc_t
         train_text_inter = inter_text_model.predict(data_, batch_size=batch_size)
         test_text_inter = inter_text_model.predict(data_test, batch_size=batch_size)
-        text_model.save_weights(r'E:\Yue\Code\ACL_entire\text_model\\text_model_1_27_adam.h5')
-        inter_text_model.save_weights(r'E:\Yue\Code\ACL_entire\text_model\\inter_text_model_1_27_adam.h5')
+        #text_model.save_weights(r'E:\Yue\Code\ACL_entire\text_model\\text_model_1_27_adam.h5')
+        #inter_text_model.save_weights(r'E:\Yue\Code\ACL_entire\text_model\\inter_text_model_1_27_adam.h5')
 plt.figure()
 plt.plot(epoch, loss, label='loss')
 plt.plot(epoch, acc, label ='acc')
@@ -187,5 +187,5 @@ plt.legend()
 plt.show()
 print('loss:',loss)
 print('acc',acc)
-'''
+
 

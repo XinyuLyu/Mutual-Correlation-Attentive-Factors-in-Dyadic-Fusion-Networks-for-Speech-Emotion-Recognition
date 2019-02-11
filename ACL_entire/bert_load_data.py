@@ -5,14 +5,14 @@ import numpy as np
 import random
 import string
 import scipy.io as scio
-
+from sklearn.utils import shuffle
 label_category = ['ang', 'exc', 'sad', 'fru', 'hap', 'neu']
 dic_path = r'E:/Yue/Entire Data/ACL_2018_entire/dictionary_new.txt'
 label_path = r'E:/Yue/Entire Data/ACL_2018_entire/label_output_new.txt'
 audio_path = r'E:/Yue/Entire Data/ACL_2018_entire/Word_Mat_New_1/'
 text_path = r'E:/Yue/Entire Data/ACL_2018_entire/text_output_new.txt'
 embed_path = r'E:/Yue/Entire Data/ACL_2018_entire/'
-maxlen = 50
+maxlen =50
 numclass = 5
 num = 7204
 
@@ -72,6 +72,31 @@ def get_text_data(path, dic):
     return res, fortoken
 
 
+def seprate_bert_by_emotion(path, data):
+    f = open(path, 'r')
+    ang = np.zeros((1,50,768))
+    hap_exc = np.zeros((1,50,768))
+    sad = np.zeros((1,50,768))
+    fru = np.zeros((1,50,768))
+    neu = np.zeros((1,50,768))
+    i = 0
+    for line in f:
+        if line.split()[0] == label_category[0]:
+            ang=np.concatenate((ang, data[i:i+1]), axis=0)
+        elif line.split()[0] == label_category[1]:
+            hap_exc=np.concatenate((hap_exc, data[i:i+1]), axis=0)
+        elif line.split()[0] == label_category[2]:
+            sad=np.concatenate((sad, data[i:i+1]), axis=0)
+        elif line.split()[0] == label_category[3]:
+            fru=np.concatenate((fru, data[i:i+1]), axis=0)
+        elif line.split()[0] == label_category[4]:
+            hap_exc=np.concatenate((hap_exc, data[i:i+1]), axis=0)
+        elif line.split()[0] == label_category[5]:
+            neu=np.concatenate((neu, data[i:i+1]), axis=0)
+        i += 1
+        print(i/7204)
+    return ang[1:], hap_exc[1:], sad[1:], fru[1:], neu[1:]
+
 def seprate_by_emotion(path, data):
     f = open(path, 'r')
     ang = []
@@ -94,23 +119,25 @@ def seprate_by_emotion(path, data):
         elif line.split()[0] == label_category[5]:
             neu.append(data[i])
         i += 1
+
     return ang, hap_exc, sad, fru, neu
 
-
 def seperate_dataset(audio_data, text_data, label):
-    train_text_data, train_audio_data, test_text_data, test_audio_data = [], [], [], []
+    train_text_data, train_audio_data, test_text_data, test_audio_data = np.zeros((1,50,768)), [], np.zeros((1,50,768)), []
     train_label, test_label = [], []
-    ang_text, hap_exc_text, sad_text, fru_text, neu_text = seprate_by_emotion(label_path, text_data)
+    print('seprate_bert_by_emotion\n')
+    ang_text, hap_exc_text, sad_text, fru_text, neu_text = seprate_bert_by_emotion(label_path, text_data)
     ang_audio, hap_exc_audio, sad_audio, fru_audio, neu_audio = seprate_by_emotion(label_path, audio_data)
     ang_label, hap_exc_label, sad_label, fru_label, neu_label = seprate_by_emotion(label_path, label)
     ang_i = 0
+    print('seprate_bert_by_emotion fininsh\n')
     while ang_i < len(ang_audio):
         if random.randint(0, 100) < 80:
-            train_text_data.append(ang_text[ang_i])
+            train_text_data=np.concatenate((train_text_data, ang_text[ang_i:ang_i+1]), axis=0)
             train_audio_data.append(ang_audio[ang_i])
             train_label.append(ang_label[ang_i])
         else:
-            test_text_data.append(ang_text[ang_i])
+            test_text_data=np.concatenate((test_text_data, ang_text[ang_i:ang_i+1]), axis=0)
             test_audio_data.append(ang_audio[ang_i])
             test_label.append(ang_label[ang_i])
         ang_i += 1
@@ -118,11 +145,11 @@ def seperate_dataset(audio_data, text_data, label):
     hap_exc_i = 0
     while hap_exc_i < len(hap_exc_audio):
         if random.randint(0, 100) < 80:
-            train_text_data.append(hap_exc_text[hap_exc_i])
+            train_text_data = np.concatenate((train_text_data, hap_exc_text[hap_exc_i:hap_exc_i+1]), axis=0)
             train_audio_data.append(hap_exc_audio[hap_exc_i])
             train_label.append(hap_exc_label[hap_exc_i])
         else:
-            test_text_data.append(hap_exc_text[hap_exc_i])
+            test_text_data = np.concatenate((test_text_data, hap_exc_text[hap_exc_i:hap_exc_i+1]), axis=0)
             test_audio_data.append(hap_exc_audio[hap_exc_i])
             test_label.append(hap_exc_label[hap_exc_i])
         hap_exc_i += 1
@@ -130,12 +157,12 @@ def seperate_dataset(audio_data, text_data, label):
     sad_i = 0
     while sad_i < len(sad_audio):
         if random.randint(0, 100) < 80:
-            train_text_data.append(sad_text[sad_i])
+            train_text_data = np.concatenate((train_text_data, sad_text[sad_i:sad_i+1]), axis=0)
             train_audio_data.append(sad_audio[sad_i])
             train_label.append(sad_label[sad_i])
 
         else:
-            test_text_data.append(sad_text[sad_i])
+            test_text_data = np.concatenate((test_text_data, sad_text[sad_i:sad_i+1]), axis=0)
             test_audio_data.append(sad_audio[sad_i])
             test_label.append(sad_label[sad_i])
         sad_i += 1
@@ -144,12 +171,12 @@ def seperate_dataset(audio_data, text_data, label):
     while fru_i < len(fru_audio):
         # ang data
         if random.randint(0, 100) < 80:
-            train_text_data.append(fru_text[fru_i])
+            train_text_data = np.concatenate((train_text_data, fru_text[fru_i:fru_i+1]), axis=0)
             train_audio_data.append(fru_audio[fru_i])
             train_label.append(fru_label[fru_i])
 
         else:
-            test_text_data.append(fru_text[fru_i])
+            test_text_data = np.concatenate((test_text_data, fru_text[fru_i:fru_i+1]), axis=0)
             test_audio_data.append(fru_audio[fru_i])
             test_label.append(fru_label[fru_i])
         fru_i += 1
@@ -158,16 +185,18 @@ def seperate_dataset(audio_data, text_data, label):
     while neu_i < len(neu_audio):
         # ang data
         if random.randint(0, 100) < 80:
-            train_text_data.append(neu_text[neu_i])
+            train_text_data = np.concatenate((train_text_data, neu_text[neu_i:neu_i+1]), axis=0)
             train_audio_data.append(neu_audio[neu_i])
             train_label.append(neu_label[neu_i])
 
         else:
-            test_text_data.append(neu_text[neu_i])
+            test_text_data = np.concatenate((test_text_data, neu_text[neu_i:neu_i+1]), axis=0)
             test_audio_data.append(neu_audio[neu_i])
             test_label.append(neu_label[neu_i])
         neu_i += 1
 
+    train_audio_data, train_text_data, train_label = shuffle(train_audio_data, train_text_data[1:], train_label)
+    test_audio_data, test_text_data, test_label = shuffle(test_audio_data, test_text_data[1:], test_label)
     return train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label
 
 
@@ -239,12 +268,16 @@ def get_data():
     label = get_label(label_path)
     #audio_data = get_mat_data(audio_path)
     audio_data = get_hier_mat_data()
-    text_data, token_data = get_text_data(text_path, dic)
+    print('get_text_data...\n')
+    #text_data, token_data = get_text_data(text_path, dic)
+    pretrain_text_data=np.load('bert_text_pretrained_feather_Cased_768_word_embedding_max_sep_len=50.npy')
+    print('seperate_dataset...\n')
     train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label_o = seperate_dataset(
-        audio_data, text_data, label)
-    orig_label=to_categorical(label, num_classes=numclass)
+        audio_data, pretrain_text_data, label)
+    print('seperate_dataset fininsh\n')
+
     train_label = to_categorical(train_label, num_classes=numclass)
     train_text_data = sequence.pad_sequences(train_text_data, padding='post', truncating='post', maxlen=maxlen)
     test_label = to_categorical(test_label_o, num_classes=numclass)
     test_text_data = sequence.pad_sequences(test_text_data, padding='post', truncating='post', maxlen=maxlen)
-    return train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label, test_label_o, embed_matrix, dic, token_data, orig_label
+    return train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label, test_label_o, embed_matrix, dic

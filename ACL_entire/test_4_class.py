@@ -57,7 +57,7 @@ inter_audio_model = Model(inputs=word_input, outputs=[word_att])
 adam = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 audio_model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
 
-# Text Branch
+# Text Branch(adam)
 text_input = Input(shape=(50,))
 em_text = Embedding(len(dic) + 1, 200, weights=[embed_matrix], trainable=True)(text_input)
 #em_text = Position_Embedding()(em_text)
@@ -81,6 +81,21 @@ inter_text_model = Model(inputs=text_input, outputs=text_att2)
 adam = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 #text_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 text_model.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
+
+# Text Branch (sgd)
+text_input_s = Input(shape=(50,))
+em_text_s = Embedding(len(dic) + 1, 200, weights=[embed_matrix], trainable=True)(text_input_s)
+text_att_s = Attention(10, 20)([em_text_s, em_text_s, em_text_s])
+text_att_s = BatchNormalization()(text_att_s)
+text_att1_s = Attention(10, 20)([text_att_s, text_att_s, text_att_s])
+text_att1_s = BatchNormalization()(text_att1_s)
+text_att2_s = Attention(10, 20)([text_att1_s, text_att1_s, text_att1_s])
+text_att2_s = BatchNormalization()(text_att2_s)
+text_att_gap_s = GlobalMaxPooling1D()(text_att2_s)
+text_prediction_s = Dense(4, activation='softmax')(text_att_gap_s)
+text_model_s = Model(inputs=text_input_s, outputs=text_prediction_s)
+inter_text_model_s = Model(inputs=text_input_s, outputs=text_att2_s)
+text_model_s.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
 
 # Fusion Model
 audio_f_input = Input(shape=(50, 64))  # 50，    #98,200      #98,
@@ -121,7 +136,7 @@ text_model.load_weights(r'E:\Yue\Code\ACL_entire\text_model\\text_model_4_class.
 inter_text_model.load_weights(r'E:\Yue\Code\ACL_entire\text_model\\inter_text_model_4_class.h5')
 train_text_inter = inter_text_model.predict(train_text_data, batch_size=batch_size)
 test_text_inter = inter_text_model.predict(test_text_data, batch_size=batch_size)
-for i in range(0):
+for i in range(1000):
     print('text branch, epoch: ', str(i))
     text_model.fit(train_text_data, train_label, batch_size=batch_size, epochs=1, verbose=1)
     loss_t, acc_t = text_model.evaluate(test_text_data, test_label, batch_size=batch_size, verbose=0)
