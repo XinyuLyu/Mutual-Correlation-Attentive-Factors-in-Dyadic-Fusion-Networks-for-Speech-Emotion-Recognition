@@ -1,0 +1,145 @@
+#! -*- coding: utf-8 -*-
+
+from keras import backend as K
+from keras.engine.topology import Layer
+from keras.initializers import Ones, Zeros
+from keras.layers import Conv1D, Dropout, Add, TimeDistributed, Dense
+
+
+class PositionwiseFeedForward():
+    def __init__(self, d_hid, d_inner_hid, dropout):
+        self.w_1 = Conv1D(d_inner_hid, 1, activation='relu')
+        self.w_2 = Conv1D(d_hid, 1)
+        self.layer_norm = LayerNormalization()
+        self.dropout = Dropout(dropout)
+
+    def __call__(self, x):  # (?,50,200)
+        output = self.w_1(x)
+        output = self.w_2(output)
+        output = self.dropout(output)
+        output = Add()([output, x])
+        return self.layer_norm(output)
+
+class LayerNormalization(Layer):
+    def __init__(self, eps=1e-6, **kwargs):
+        self.eps = eps
+        super(LayerNormalization, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        self.gamma = self.add_weight(name='gamma', shape=input_shape[-1:],
+                                     initializer=Ones(), trainable=True)
+        self.beta = self.add_weight(name='beta', shape=input_shape[-1:],
+                                    initializer=Zeros(), trainable=True)
+        super(LayerNormalization, self).build(input_shape)
+
+    def call(self, x):
+        mean = K.mean(x, axis=-1, keepdims=True)
+        std = K.std(x, axis=-1, keepdims=True)
+        return self.gamma * (x - mean) / (std + self.eps) + self.beta
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
+
+class Position_Embedding(Layer):
+
+    def __init__(self, size=None, mode='sum', **kwargs):
+        self.size = size  # 必须为偶数
+        self.mode = mode
+        super(Position_Embedding, self).__init__(**kwargs)
+
+    def call(self, x):
+        if (self.size == None) or (self.mode == 'sum'):
+            self.size = int(x.shape[-1])
+        batch_size, seq_len = K.shape(x)[0], K.shape(x)[1]
+        position_j = 1. / K.pow(10000.,
+                                2 * K.arange(self.size / 2, dtype='float32'
+                                             ) / self.size)
+        position_j = K.expand_dims(position_j, 0)
+        position_i = K.cumsum(K.ones_like(x[:, :, 0]), 1) - 1  # K.arange不支持变长，只好用这种方法生成
+        position_i = K.expand_dims(position_i, 2)
+        position_ij = K.dot(position_i, position_j)
+        position_ij = K.concatenate([K.cos(position_ij), K.sin(position_ij)], 2)
+        if self.mode == 'sum':
+            return position_ij + x
+        elif self.mode == 'concat':
+            return K.concatenate([position_ij, x], 2)
+
+    def compute_output_shape(self, input_shape):
+        if self.mode == 'sum':
+            return input_shape
+        elif self.mode == 'concat':
+            return (input_shape[0], input_shape[1], input_shape[2] + self.size)
+
+
+class Attention(Layer):
+
+    def __init__(self, n_head, d_k, use_norm, use_ffn, **kwargs):
+        self.n_head = n_head
+        self.d_k = d_k
+        self.output_dim = n_head * d_k
+        self.use_norm = use_norm
+        self.use_ffn = use_ffn
+
+        self.layer_norm = LayerNormalization() if use_norm else None
+        self.pos_ffn_layer = PositionwiseFeedForward(64, 64*4, 0.25) if use_ffn else None
+        super(Attention, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        self.WQ = self.add_weight(name='WQ',
+                                  shape=(input_shape[0][-1], self.output_dim),
+                                  initializer='glorot_uniform',
+                                  trainable=True)
+        self.WK = self.add_weight(name='WK',
+                                  shape=(input_shape[1][-1], self.output_dim),
+                                  initializer='glorot_uniform',
+                                  trainable=True)
+        self.WV = self.add_weight(name='WV',
+                                  shape=(input_shape[2][-1], self.output_dim),
+                                  initializer='glorot_uniform',
+                                  trainable=True)
+        self.WO = self.add_weight(name='WO',
+                                  shape=(self.output_dim,input_shape[0][-1]),
+                                  initializer='glorot_uniform',
+                                  trainable=True
+                                  )
+
+        super(Attention, self).build(input_shape)
+
+    def call(self, x):
+        Q_seq, K_seq , V_seq =x
+        #qs_layer
+        Q_seq1 = K.dot(Q_seq, self.WQ)#(?,50,n_head*d_k)
+        K_seq1 = K.dot(K_seq, self.WK)
+        V_seq1 = K.dot(V_seq, self.WV)
+        #reshape 1
+        Q_seq2 = K.reshape(Q_seq1, (-1, K.shape(Q_seq1)[1], self.n_head, self.d_k))#(?,50,n_head,d_k)
+        Q_seq3 = K.permute_dimensions(Q_seq2, (0, 2, 1, 3))#(?,n_head,50,d_k)
+        K_seq2 = K.reshape(K_seq1, (-1, K.shape(K_seq1)[1], self.n_head, self.d_k))
+        K_seq3 = K.permute_dimensions(K_seq2, (0, 2, 1, 3))
+        V_seq2 = K.reshape(V_seq1, (-1, K.shape(V_seq1)[1], self.n_head, self.d_k))   # 10，20
+        V_seq3 = K.permute_dimensions(V_seq2, (0, 2, 1, 3))
+
+        # attention
+        A = K.batch_dot(Q_seq3, K_seq3, axes=[3, 3]) / self.d_k ** 0.5#(?,n_head,50,50)
+        A1 = K.softmax(A)
+        #A2 = Dropout(0.1)(A1)
+
+        # reshape 2
+        O_seq = K.batch_dot(A1, V_seq3, axes=[3, 2])#(?,n_head,50,d_k)
+        O_seq1 = K.permute_dimensions(O_seq, (0, 2, 1, 3))#(?,50,n_head,d_k)
+        O_seq2 = K.reshape(O_seq1, [-1, K.shape(O_seq1)[1], self.output_dim])  # (?, 50, n_head*d_k)
+
+        #w_o
+        outputs = K.dot(O_seq2, self.WO)# (?, 50, 64)
+
+        return outputs
+
+        if not self.layer_norm: return outputs
+        outputs = Add()([outputs, x[0]])  # outputs:(?,50,200)
+        outputs = self.layer_norm(outputs)#outputs:(?,50,200)
+        if not self.pos_ffn_layer: return outputs
+        return self.pos_ffn_layer(outputs)#return :(?,50,200)
+
+    def compute_output_shape(self, input_shape):
+        return input_shape[0]
+

@@ -1,6 +1,6 @@
 from __future__ import print_function
 from self_attention import Attention
-from test_load_data import get_data, data_generator, data_generator_output,analyze_data  # process_train_data
+from DataLoader_5class import get_data, data_generator, data_generator_output,analyze_data  # process_train_data
 from keras.models import Model
 from keras.layers import Dense, Dropout, Input, Embedding, concatenate, \
     GlobalAveragePooling1D, Conv1D, GlobalMaxPooling1D, TimeDistributed

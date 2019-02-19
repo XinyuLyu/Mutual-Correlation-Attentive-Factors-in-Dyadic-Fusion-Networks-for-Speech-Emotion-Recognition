@@ -21,6 +21,8 @@ audio_path = r'E:\\Yue\\Entire Data\\ACL_2018_entire\\Word_Mat_New_1\\'
 print('Loading data...')
 train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label, test_label_o, embed_matrix, dic, token_data = get_data()
 
+
+
 print('train_audio shape:', len(train_audio_data))
 print('train_text shape:', train_text_data.shape)
 print('test_audio shape:', len(test_audio_data))
@@ -78,8 +80,8 @@ text_prediction = Dense(5, activation='softmax')(text_att_gap)
 text_model = Model(inputs=text_input, outputs=text_prediction)
 inter_text_model = Model(inputs=text_input, outputs=text_att2)
 adam = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
-#text_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-text_model.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
+text_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+#text_model.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
 
 # Fusion Model
 audio_f_input = Input(shape=(50, 64))  # 50，    #98,200      #98,
@@ -117,27 +119,26 @@ final_inter_model = Model(inputs=[text_f_input, audio_f_input], outputs=merge_we
 text_acc = 0
 train_text_inter = None
 test_text_inter = None
-data_, label_ = shuffle(train_text_data, train_label)
-
-text_model.load_weights(r'E:\Yue\Code\ACL_entire\text_model\\sgd.h5')
-inter_text_model.load_weights(r'E:\Yue\Code\ACL_entire\text_model\\inter_sgd.h5')
-#loss_t, acc_t = text_model.evaluate(data_test, label_test, batch_size=batch_size, verbose=0)
-#text_acc = acc_t
+'''
+text_model.load_weights(r'E:\Yue\Code\ACL_entire\text_model\\eva_adam.h5')
+inter_text_model.load_weights(r'E:\Yue\Code\ACL_entire\text_model\\inter_eva_adam.h5')
+loss_t, acc_t = text_model.evaluate(test_text_data, test_label, batch_size=batch_size, verbose=0)
+text_acc = acc_t
 train_text_inter = inter_text_model.predict(train_text_data, batch_size=batch_size)
 test_text_inter = inter_text_model.predict(test_text_data, batch_size=batch_size)
-
-for i in range(0):
+'''
+for i in range(100):
     print('text branch, epoch: ', str(i))
-    text_model.fit(data_, label_, batch_size=batch_size, epochs=1, verbose=1)
+    text_model.fit(train_text_data, train_label, batch_size=batch_size, epochs=1, verbose=1)
     loss_t, acc_t = text_model.evaluate(test_text_data, test_label, batch_size=batch_size, verbose=0)
     print('epoch: ', str(i))
     print('loss_t', loss_t, ' ', 'acc_t', acc_t)
     if acc_t >= text_acc:
         text_acc = acc_t
-        train_text_inter = inter_text_model.predict(data_, batch_size=batch_size)
+        train_text_inter = inter_text_model.predict(train_text_data, batch_size=batch_size)
         test_text_inter = inter_text_model.predict(test_text_data, batch_size=batch_size)
-        text_model.save_weights(r'E:\Yue\Code\ACL_entire\text_model\\sgd.h5')
-        inter_text_model.save_weights(r'E:\Yue\Code\ACL_entire\text_model\\inter_sgd.h5')
+        text_model.save_weights(r'E:\Yue\Code\ACL_entire\text_model\\text_sgd_200.h5')
+        inter_text_model.save_weights(r'E:\Yue\Code\ACL_entire\text_model\\inter_text_sgd_200.h5')
 print(text_acc)
 
 train_audio_inter = None
@@ -156,7 +157,7 @@ train_audio_inter = inter_audio_model.predict_generator(
 test_audio_inter = inter_audio_model.predict_generator(
     data_generator_output(audio_path, test_audio_data, test_label, len(test_audio_data)), steps=len(test_audio_data))
 '''
-for i in range(1):
+for i in range(0):
     print('audio branch, epoch: ', str(i))
     train_d, train_l = shuffle(train_audio_data, train_label)
     audio_model.fit_generator(data_generator(audio_path, train_d, train_l, len(train_d)),
@@ -180,14 +181,10 @@ print(audio_acc)
 
 final_acc = 0
 result = None
-for i in range(100):
+for i in range(0):
     print('fusion branch, epoch: ', str(i))
-    #final_model.fit([train_text_inter, train_audio_inter], train_label, batch_size=batch_size, epochs=1)
-    #loss_f, acc_f = final_model.evaluate([test_text_inter, test_audio_inter], test_label, batch_size=batch_size,
-    #                                     verbose=0)\
-    final_model.fit([train_text_inter, train_audio_inter], label_, batch_size=batch_size, epochs=1)
-    loss_f, acc_f = final_model.evaluate([test_text_inter, test_audio_inter], test_label, batch_size=batch_size,
-                                         verbose=0)
+    final_model.fit([train_text_inter, train_audio_inter], train_label, batch_size=batch_size, epochs=1)
+    loss_f, acc_f = final_model.evaluate([test_text_inter, test_audio_inter], test_label, batch_size=batch_size,verbose=0)
     print('epoch: ', str(i))
     print('loss_f', loss_f, ' ', 'acc_f', acc_f)
     if acc_f >= final_acc:
@@ -217,5 +214,3 @@ print("1", r_1)
 print("2", r_2)
 print("3", r_3)
 print("4", r_4)
-
-

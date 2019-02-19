@@ -46,39 +46,36 @@ class LayerNormalization(Layer):
 
 
 class ScaledDotProductAttention():
-    def __init__(self, d_k, attn_dropout):
+    def __init__(self, d_k):#, attn_dropout):
         self.temper = np.sqrt(d_k)
-        self.dropout = Dropout(attn_dropout)
+        #self.dropout = Dropout(attn_dropout)
 
     def __call__(self, q, k, v):# q,k,v:[n_head * batch_size, len_k, d_k](4*?,50,d_k)
         attn = Lambda(lambda x: K.batch_dot(x[0], x[1], axes=[2, 2]) / self.temper)([q, k])# attn:[n_head * batch_size, len_k, len_k](4*?,50,50)
         attn = Activation('softmax')(attn)
-        attn = self.dropout(attn)
+        #attn = self.dropout(attn)
         output = Lambda(lambda x: K.batch_dot(x[0], x[1]))([attn, v]) # output:[n_head * batch_size, len_k, len_k](4*?,50,d_k)
         return output
 
 class PositionwiseFeedForward():
-    def __init__(self, d_model, ffn_dropout):
-        self.w_1 = Conv1D(400, 1, activation='relu')#2048
-        self.w_2 = Conv1D(200, 1)#512
+    def __init__(self):#d_model,ffn_dropout
+        self.w_1 = Conv1D(64*4, 1, activation='relu')#2048
+        self.w_2 = Conv1D(64, 1)#512
         self.layer_norm = LayerNormalization()
-        self.dropout = Dropout(ffn_dropout)
+        #self.dropout = Dropout(ffn_dropout)
 
     def __call__(self, x):  # x:(?,50,200)
         output = self.w_1(x) # output:(?,50,800)
         output = self.w_2(output) # output:(?,50,200)
-        output = self.dropout(output)
+        #output = self.dropout(output)
         output = Add()([output, x]) # output:(?,50,200),(?,50,200)
         return self.layer_norm(output)#return :(?,50,200)
 
 class MultiHeadAttention():
     # mode 0 - big martixes, faster; mode 1 - more clear implementation
-    def __init__(self, n_head, d_k, d_model, attn_dropout, ffn_dropout, use_norm=True, use_ffn=True):
+    def __init__(self, n_head, d_k, use_norm=True, use_ffn=True):
         self.n_head = n_head
         self.d_k = d_k
-        self.attn_dropout = attn_dropout
-        self.input_shape = d_model
-        self.ffn_dropout = ffn_dropout
         self.use_norm = use_norm
         self.use_ffn = use_ffn
 
@@ -86,13 +83,12 @@ class MultiHeadAttention():
         self.ks_layer = Dense(n_head * d_k, use_bias=False)
         self.vs_layer = Dense(n_head * d_k, use_bias=False)
 
-        self.attention = ScaledDotProductAttention(d_k, attn_dropout)
+        self.attention = ScaledDotProductAttention(d_k)
+        self.w_o = TimeDistributed(Dense(64))
         self.layer_norm = LayerNormalization() if use_norm else None
-        self.w_o = TimeDistributed(Dense(d_model))
-        self.pos_ffn_layer = PositionwiseFeedForward(d_model, ffn_dropout) if use_ffn else None
+        self.pos_ffn_layer = PositionwiseFeedForward() if use_ffn else None
 
     def __call__(self, q, k, v):# q,k,v (?,50,200)
-        d_k, d_v = self.d_k, self.d_k
         n_head = self.n_head
 
         qs = self.qs_layer(q)  # qs:[batch_size, len_k, n_head*d_k](?,50,n_head*d_k)
@@ -116,17 +112,17 @@ class MultiHeadAttention():
             s = tf.shape(x)  #s:[n_head * batch_size, len_k, d_k](n_head*?,50,d_k)
             x = tf.reshape(x, [n_head, -1, s[1], s[2]])   # x:[n_head, batch_size,len_k, d_k](n_head,? , 50, d_k)
             x = tf.transpose(x, [1, 2, 0, 3])            # x:[batch_size, len_k, n_head , d_k](?, 50, n_head , d_k)
-            x = tf.reshape(x, [-1, s[1], n_head * d_v])  # x:[batch_size, len_k, n_head * d_k](?, 50, n_head*d_k)
+            x = tf.reshape(x, [-1, s[1], n_head * self.d_k])  # x:[batch_size, len_k, n_head * d_k](?, 50, n_head*d_k)
             return x
 
         head = Lambda(reshape2)(head)  # head:[batch_size, len_k, n_head * d_k](?,50,n_head * d_k)
 
         outputs = self.w_o(head) #outputs:[batch_size, len_k, 200] (?,50,200)
-        outputs = Dropout(self.attn_dropout)(outputs)  # outputs:(?,50,200)
+        #outputs = Dropout(self.attn_dropout)(outputs)  # outputs:(?,50,200)
         if not self.layer_norm: return outputs
         outputs = Add()([outputs, q])  # outputs:(?,50,200)
         outputs = self.layer_norm(outputs)#outputs:(?,50,200)
-        if not self.pos_ffn_layer: return outputs
+        if not self.pos_ffn_layer : return outputs
         return self.pos_ffn_layer(outputs)#return :(?,50,200)
 
 
