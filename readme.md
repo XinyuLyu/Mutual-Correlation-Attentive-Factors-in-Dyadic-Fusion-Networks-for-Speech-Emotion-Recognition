@@ -1,19 +1,13 @@
 ## ACL_Entire
-
-1. no_use       : previous codes
-
-Now Use:  
-1. (5 class)  
-audio_5class
-text_5class
-DataLoader_5class
-text_audio_fusion_4class
-2. (4 class):  
+Now Use:  (only 4 class)
+1. train individually and fuse
 audio_4class
 text_4class
+text_audio_fusion_4class 
 DataLoader_4class  
-text_audio_fusion_5class 
-3. attention
-self_attention
-self_attention_no_ffn
-## result
+self_attention_hybrid
+
+2. fuse in attention and train
+hybrid_model
+DataLoader_hybrid_4class
+self_attention_hybrid

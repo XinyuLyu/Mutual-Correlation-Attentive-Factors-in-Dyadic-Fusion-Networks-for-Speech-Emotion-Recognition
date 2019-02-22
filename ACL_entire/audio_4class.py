@@ -1,5 +1,5 @@
 from __future__ import print_function
-from self_attention_no_bn import Attention
+from self_attention_hybrid import Attention
 from DataLoader_4class import get_data, analyze_data, data_generator, data_generator_output  # process_train_data
 from keras.models import Model
 from keras.layers import Dense, Input, GlobalAveragePooling1D, TimeDistributed, Dropout, BatchNormalization
@@ -22,19 +22,15 @@ train_audio_data, train_text_data, train_label, test_audio_data, test_text_data,
 
 # Audio branch
 audio_input = Input(shape=(513, 64))
-audio_att1 = Attention(n_head=10, d_k=5, use_norm=False, use_ffn=False)([audio_input, audio_input, audio_input])
-#audio_att1 = BatchNormalization()(audio_att1)
-audio_att2 = Attention(n_head=10, d_k=5, use_norm=False, use_ffn=False)([audio_att1, audio_att1, audio_att1])
-#audio_att2 = BatchNormalization()(audio_att2)
+audio_att1 = Attention(n_head=4, d_k=5)([audio_input, audio_input, audio_input])
+audio_att2 = Attention(n_head=4, d_k=5)([audio_att1, audio_att1, audio_att1])
 audio_att_gap = GlobalAveragePooling1D()(audio_att2)
 model_frame = Model(audio_input, audio_att_gap)
 
 word_input = Input(shape=(50, 513, 64))
 word_input1 = TimeDistributed(model_frame)(word_input)
-word_att1 = Attention(n_head=4, d_k=10, use_norm=False, use_ffn=False)([word_input1, word_input1, word_input1])
-#word_att1 = BatchNormalization()(word_att1)
-word_att2 = Attention(n_head=4, d_k=10, use_norm=False, use_ffn=False)([word_att1, word_att1, word_att1])
-#word_att2 = BatchNormalization()(word_att2)
+word_att1 = Attention(n_head=4, d_k=10)([word_input1, word_input1, word_input1])
+word_att2 = Attention(n_head=4, d_k=10)([word_att1, word_att1, word_att1])
 word_att_gap = GlobalAveragePooling1D()(word_att2)#可以试一下不要的话
 audio_prediction = Dense(4, activation='softmax')(word_att_gap)
 audio_model = Model(inputs=word_input, outputs=audio_prediction)
@@ -48,13 +44,12 @@ test_audio_inter = None
 audio_acc = 0
 loss =[]
 acc = []
-size = 50
+size = 100
 epoch = np.linspace(1,size,size)
 for i in range(size):
     print('audio branch, epoch: ', str(i))
-    train_d, train_l = shuffle(train_audio_data, train_label)
-    history = audio_model.fit_generator(data_generator(audio_path, train_d, train_l, len(train_d)),
-                              steps_per_epoch=len(train_d) / 4, epochs=1, verbose=1)
+    history = audio_model.fit_generator(data_generator(audio_path, train_audio_data, train_label, len(train_audio_data)),
+                                        steps_per_epoch=len(train_audio_data) / 4, epochs=1, verbose=1)
     loss.append(history.history['loss'])
     acc.append(history.history['acc'])
     loss_a, acc_a = audio_model.evaluate_generator(

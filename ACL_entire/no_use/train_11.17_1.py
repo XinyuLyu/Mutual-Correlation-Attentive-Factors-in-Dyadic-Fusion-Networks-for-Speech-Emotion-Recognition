@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from self_attention import Attention, Position_Embedding
+from self_attention_hybrid import Attention, Position_Embedding
 from load_ori_data import get_data, analyze_data  #process_train_data
 from keras.models import Model
 from keras.layers import Dense, Dropout, Input, Embedding, concatenate, \

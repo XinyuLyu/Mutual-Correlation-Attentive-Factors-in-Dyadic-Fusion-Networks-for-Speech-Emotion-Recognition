@@ -195,6 +195,7 @@ def data_generator(path, audio_data, audio_label, num):
         yield (np.array(res), np.array(res_label))
 
 
+
 def data_generator_output(path, audio_data, audio_label, num):
     i = 0
     while 1:

@@ -1,5 +1,5 @@
 from __future__ import print_function
-from self_attention_no_bn import Position_Embedding,Attention
+from self_attention_hybrid import Position_Embedding,Attention
 from DataLoader_4class import get_data, data_generator, data_generator_output,analyze_data  # process_train_data
 from keras.models import Model
 from keras.layers import Dense, Dropout, Input, Embedding, concatenate, \
@@ -31,16 +31,11 @@ print('test_label shape:', test_label.shape)
 text_input = Input(shape=(50,))
 em_text = Embedding(len(dic) + 1, 200, weights=[embed_matrix], trainable=True)(text_input)
 em_text = Position_Embedding()(em_text)#Tensor position embedding 1
-'''
-text_att = MultiHeadAttention(n_head=20, d_k=10, d_model=200,  attn_dropout=0.25, ffn_dropout=0.1, use_norm=True, use_ffn=False)(em_text, em_text, em_text)
-text_att1 = MultiHeadAttention(n_head=20, d_k=10, d_model=200,  attn_dropout=0.25, ffn_dropout=0.1, use_norm=True, use_ffn=False)(text_att, text_att, text_att)
-text_att2 = MultiHeadAttention(n_head=20, d_k=10, d_model=200,  attn_dropout=0.25, ffn_dropout=0.1, use_norm=True, use_ffn=True)(text_att1, text_att1, text_att1)
-'''
-text_att = Attention(n_head=5, d_k=100,use_norm=True, use_ffn=False)([em_text, em_text, em_text])#20,10 50,10
+text_att = Attention(n_head=5, d_k=100)([em_text, em_text, em_text])#20,10 50,10
 text_att = BatchNormalization()(text_att)
-text_att1 = Attention(n_head=5, d_k=100,use_norm=True, use_ffn=False)([text_att, text_att, text_att])
+text_att1 = Attention(n_head=5, d_k=100)([text_att, text_att, text_att])
 text_att1 = BatchNormalization()(text_att1)
-text_att2 = Attention(n_head=5, d_k=100,use_norm=True, use_ffn=False)([text_att1, text_att1, text_att1])
+text_att2 = Attention(n_head=5, d_k=100)([text_att1, text_att1, text_att1])
 text_att2 = BatchNormalization()(text_att2)
 text_att_gap = GlobalMaxPooling1D()(text_att1)
 text_prediction = Dense(4, activation='softmax')(text_att_gap)
