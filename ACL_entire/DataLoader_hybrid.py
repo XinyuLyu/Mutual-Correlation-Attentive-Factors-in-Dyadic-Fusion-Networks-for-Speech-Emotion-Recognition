@@ -5,15 +5,18 @@ import numpy as np
 import random
 import string
 import scipy.io as scio
-
+from sklearn.utils import shuffle
+from data import *
+import linecache
+from data import save_data_hybrid, load_data_hybrid
 label_category = ['ang', 'exc', 'sad', 'fru', 'hap', 'neu']
 dic_path = r'E:/Yue/Entire Data/ACL_2018_entire/dictionary_new.txt'
 label_path = r'E:/Yue/Entire Data/ACL_2018_entire/label_output_new.txt'
 audio_path = r'E:/Yue/Entire Data/ACL_2018_entire/Word_Mat_New_1/'
 text_path = r'E:/Yue/Entire Data/ACL_2018_entire/text_output_new.txt'
 embed_path = r'E:/Yue/Entire Data/ACL_2018_entire/'
-maxlen = 98
-numclass = 5
+maxlen = 50
+numclass = 4
 num = 7204
 
 
@@ -40,7 +43,7 @@ def get_label(path):
             res.append(1)
         elif line.split()[0] == label_category[5]:
             statistic[label_category[5]] += 1
-            res.append(4)
+            res.append(3)
     print(statistic)
     return res
 
@@ -75,8 +78,8 @@ def seprate_by_emotion(path, data):
     ang = []
     hap_exc = []
     sad = []
-    fru = []
-    neu = []
+    fru_neu = []
+    #neu = []
     i = 0
     for line in f:
         if line.split()[0] == label_category[0]:
@@ -86,21 +89,21 @@ def seprate_by_emotion(path, data):
         elif line.split()[0] == label_category[2]:
             sad.append(data[i])
         elif line.split()[0] == label_category[3]:
-            fru.append(data[i])
+            fru_neu.append(data[i])
         elif line.split()[0] == label_category[4]:
             hap_exc.append(data[i])
         elif line.split()[0] == label_category[5]:
-            neu.append(data[i])
+            fru_neu.append(data[i])
         i += 1
-    return ang, hap_exc, sad, fru, neu
+    return ang, hap_exc, sad, fru_neu
 
 
 def seperate_dataset(audio_data, text_data, label):
     train_text_data, train_audio_data, test_text_data, test_audio_data = [], [], [], []
     train_label, test_label = [], []
-    ang_text, hap_exc_text, sad_text, fru_text, neu_text = seprate_by_emotion(label_path, text_data)
-    ang_audio, hap_exc_audio, sad_audio, fru_audio, neu_audio = seprate_by_emotion(label_path, audio_data)
-    ang_label, hap_exc_label, sad_label, fru_label, neu_label = seprate_by_emotion(label_path, label)
+    ang_text, hap_exc_text, sad_text, fru_neu_text = seprate_by_emotion(label_path, text_data)
+    ang_audio, hap_exc_audio, sad_audio, fru_neu_audio = seprate_by_emotion(label_path, audio_data)
+    ang_label, hap_exc_label, sad_label, fru_neu_label = seprate_by_emotion(label_path, label)
     ang_i = 0
     while ang_i < len(ang_audio):
         if random.randint(0, 100) < 80:
@@ -138,43 +141,28 @@ def seperate_dataset(audio_data, text_data, label):
             test_label.append(sad_label[sad_i])
         sad_i += 1
 
-    fru_i = 0
-    while fru_i < len(fru_audio):
+    fru_neu_i = 0
+    while fru_neu_i < len(fru_neu_audio):
         # ang data
         if random.randint(0, 100) < 80:
-            train_text_data.append(fru_text[fru_i])
-            train_audio_data.append(fru_audio[fru_i])
-            train_label.append(fru_label[fru_i])
+            train_text_data.append(fru_neu_text[fru_neu_i])
+            train_audio_data.append(fru_neu_audio[fru_neu_i])
+            train_label.append(fru_neu_label[fru_neu_i])
 
         else:
-            test_text_data.append(fru_text[fru_i])
-            test_audio_data.append(fru_audio[fru_i])
-            test_label.append(fru_label[fru_i])
-        fru_i += 1
-
-    neu_i = 0
-    while neu_i < len(neu_audio):
-        # ang data
-        if random.randint(0, 100) < 80:
-            train_text_data.append(neu_text[neu_i])
-            train_audio_data.append(neu_audio[neu_i])
-            train_label.append(neu_label[neu_i])
-
-        else:
-            test_text_data.append(neu_text[neu_i])
-            test_audio_data.append(neu_audio[neu_i])
-            test_label.append(neu_label[neu_i])
-        neu_i += 1
-
+            test_text_data.append(fru_neu_text[fru_neu_i])
+            test_audio_data.append(fru_neu_audio[fru_neu_i])
+            test_label.append(fru_neu_label[fru_neu_i])
+        fru_neu_i += 1
+    train_audio_data, train_text_data, train_label = shuffle(train_audio_data, train_text_data, train_label)
+    test_audio_data, test_text_data, test_label = shuffle(test_audio_data, test_text_data, test_label)
     return train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label
 
-
 def analyze_data(test_label, result):
-    r_0 = {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0}
-    r_1 ={'0': 0, '1': 0, '2': 0, '3': 0, '4': 0}
-    r_2 ={'0': 0, '1': 0, '2': 0, '3': 0, '4': 0}
-    r_3 ={'0': 0, '1': 0, '2': 0, '3': 0, '4': 0}
-    r_4 ={'0': 0, '1': 0, '2': 0, '3': 0, '4': 0}
+    r_0 = {'0': 0, '1': 0, '2': 0, '3': 0}
+    r_1 ={'0': 0, '1': 0, '2': 0, '3': 0}
+    r_2 ={'0': 0, '1': 0, '2': 0, '3': 0}
+    r_3 ={'0': 0, '1': 0, '2': 0, '3': 0}
 
     i = 0
     while i < len(test_label):  # 4
@@ -186,43 +174,54 @@ def analyze_data(test_label, result):
             r_2[str(result[i])] += 1
         elif test_label[i] == 3:
             r_3[str(result[i])] += 1
-        elif test_label[i] == 4:
-            r_4[str(result[i])] += 1
+
         i += 1
-    return r_0, r_1, r_2, r_3, r_4
+    return r_0, r_1, r_2, r_3
 
+def get_text_data(path, dic):
+    f = open(path, 'r')
+    res = []
+    i = 0
+    for line in f:
+        text = embed_onehot(dic, line.translate(str.maketrans('', '', string.punctuation)))
+        res.append(text)
+        i += 1
+    f.close()
+    return res
 
-def data_generator(path, audio_data, audio_label, num):
+def data_generator(audio_path, audio_data, text_data,audio_label, num):
     i = 0
     while 1:
-        res, res_label = [], []
+        res_a, res_t, res_label = [], [], []
         j = 0
-        while j < 4:
+        while j < 8:
             if i == num:
                 i = 0
-            tmp = scio.loadmat(path + str(audio_data[i]) + ".mat")
+            tmp = scio.loadmat(audio_path + str(audio_data[i]) + ".mat")
             tmp = tmp['z1']
-            res.append(tmp)
+            res_a.append(tmp)
+            res_t.append(text_data[i])
             res_label.append(audio_label[i])
             j += 1
             i += 1
-        res = sequence.pad_sequences(res, padding='post', truncating='post', dtype='float32', maxlen=maxlen)
-        yield (np.array(res), np.array(res_label))
+        res_a = sequence.pad_sequences(res_a, padding='post', truncating='post', dtype='float32', maxlen=maxlen)
+        yield ({'input_2': np.array(res_a), 'input_3': np.array(res_t)}, {'dense_2': np.array(res_label)})
 
 
-def data_generator_output(path, audio_data, audio_label, num):
+def data_generator_output(audio_path, audio_data, text_data,audio_label, num):
     i = 0
     while 1:
-        res, res_label = [], []
+        res_a,res_t,res_label = [], [],[]
         if i == num:
             i = 0
-        tmp = scio.loadmat(path + str(audio_data[i]) + ".mat")
+        tmp = scio.loadmat(audio_path + str(audio_data[i]) + ".mat")
         tmp = tmp['z1']
-        res.append(tmp)
+        res_a.append(tmp)
+        res_t.append(text_data[i])
         res_label.append(audio_label[i])
         i += 1
-        res = sequence.pad_sequences(res, padding='post', truncating='post', dtype='float32', maxlen=maxlen)
-        yield (np.array(res), np.array(res_label))
+        res_a = sequence.pad_sequences(res_a, padding='post', truncating='post', dtype='float32', maxlen=maxlen)
+        yield ({'input_2': np.array(res_a), 'input_3': np.array(res_t)}, {'dense_2': np.array(res_label)})
 
 def get_hier_mat_data():
     res = []
@@ -232,33 +231,23 @@ def get_hier_mat_data():
         i += 1
     return res
 
-def check(train_data,test_data):
-    f = open('train_data.txt', 'w')
-    for list in train_data:
-        for i in range(len(list)):
-            f.write(str(list[i]) + ' ')
-        f.write('\n')
-    f.close()
-    f1 = open('test_data.txt', 'w')
-    for list1 in test_data:
-        for i1 in range(len(list1)):
-            f1.write(str(list1[i1]) + ' ')
-        f1.write('\n')
-    f1.close()
-    print("finish")
 def get_data():
     dic = get_dictionary(dic_path)
     embed_matrix = initial_embed(dic, embed_path)
     label = get_label(label_path)
-    #audio_data = get_mat_data(audio_path)
     audio_data = get_hier_mat_data()
     text_data = get_text_data(text_path, dic)
     train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label_o = seperate_dataset(
         audio_data, text_data, label)
-    check(train_text_data,test_text_data)
-    '''
     train_label = to_categorical(train_label, num_classes=numclass)
     train_text_data = sequence.pad_sequences(train_text_data, padding='post', truncating='post', maxlen=maxlen)
     test_label = to_categorical(test_label_o, num_classes=numclass)
     test_text_data = sequence.pad_sequences(test_text_data, padding='post', truncating='post', maxlen=maxlen)
-    return train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label, test_label_o, embed_matrix, dic'''
+    save_data_hybrid(train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label, test_label_o)
+    return train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label, test_label_o, embed_matrix, dic
+
+def get_data1():
+    dic = get_dictionary(dic_path)
+    embed_matrix = initial_embed(dic, embed_path)
+    train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label, test_label_o = load_data_hybrid()
+    return train_audio_data, train_text_data, train_label, test_audio_data, test_text_data, test_label, test_label_o, embed_matrix, dic
