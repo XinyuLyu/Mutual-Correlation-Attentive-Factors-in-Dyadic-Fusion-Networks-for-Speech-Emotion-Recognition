@@ -3,10 +3,29 @@
 from keras import backend as K
 from keras.engine.topology import Layer
 from keras.initializers import Ones, Zeros
-from keras.layers import Conv1D, Dropout, Add, TimeDistributed, Dense
 
 init = 'he_uniform'
 trainable = True
+class LayerNormalization(Layer):
+    def __init__(self, eps=1e-6, **kwargs):
+        self.eps = eps
+        super(LayerNormalization, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        self.gamma = self.add_weight(name='gamma', shape=input_shape[-1:],
+                                     initializer=Ones(), trainable=True)
+        self.beta = self.add_weight(name='beta', shape=input_shape[-1:],
+                                    initializer=Zeros(), trainable=True)
+        super(LayerNormalization, self).build(input_shape)
+
+    def call(self, x):
+        mean = K.mean(x, axis=-1, keepdims=True)
+        std = K.std(x, axis=-1, keepdims=True)
+        return self.gamma * (x - mean) / (std + self.eps) + self.beta
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
+
 
 class Position_Embedding(Layer):
 
@@ -69,7 +88,7 @@ class Attention(Layer):
         super(Attention, self).build(input_shape)
 
     def call(self, x):
-        Q_seq, K_seq , V_seq =x
+        Q_seq, K_seq , V_seq = x
         #qs_layer
         Q_seq1 = K.dot(Q_seq, self.WQ)  # (?,50,n_head*d_k)
         K_seq1 = K.dot(K_seq, self.WK)
@@ -85,7 +104,7 @@ class Attention(Layer):
         # attention
         A = K.batch_dot(Q_seq3, K_seq3, axes=[3, 3]) / self.d_k ** 0.5  # (?,n_head,50,50)
         A1 = K.softmax(A)
-        #A2 = Dropout(0.1)(A1)
+        # A2 = Dropout(0.1)(A1)
 
         # reshape 2
         O_seq = K.batch_dot(A1, V_seq3, axes=[3, 2])  # (?,n_head,50,d_k)
@@ -116,35 +135,36 @@ class FusionAttention(Layer):
                                     initializer=init,
                                     trainable=True)
         self.WK_a = self.add_weight(name='WK_a',
-                                    shape=(input_shape[1][-1], self.output_dim),
+                                    shape=(input_shape[0][-1], self.output_dim),
                                     initializer=init,
                                     trainable=True)
         self.WV_a = self.add_weight(name='WV_a',
-                                    shape=(input_shape[2][-1], self.output_dim),
+                                    shape=(input_shape[0][-1], self.output_dim),
                                     initializer=init,
                                     trainable=True)
         self.WO_a = self.add_weight(name='WO_a',
-                                    shape=(self.output_dim, input_shape[0][-1]),
+                                    shape=(self.output_dim, input_shape[1][-1]),
                                     initializer=init,
                                     trainable=True)
-        self.WF_t = self.add_weight(name='WF_t',
-                                    shape=(self.d_k, self.d_k),
-                                    initializer=init,
-                                    trainable=trainable)
         self.WQ_t = self.add_weight(name='WQ_t',
-                                    shape=(input_shape[3][-1], self.output_dim),
+                                    shape=(input_shape[1][-1], self.output_dim),
                                     initializer=init,
                                     trainable=trainable)
         self.WK_t = self.add_weight(name='WK_t',
-                                    shape=(input_shape[4][-1], self.output_dim),
+                                    shape=(input_shape[1][-1], self.output_dim),
                                     initializer=init,
                                     trainable=trainable)
         self.WV_t = self.add_weight(name='WV_t',
-                                    shape=(input_shape[5][-1], self.output_dim),
+                                    shape=(input_shape[1][-1], self.output_dim),
                                     initializer=init,
                                     trainable=trainable)
         self.WO_t = self.add_weight(name='WO_t',
-                                    shape=(self.output_dim, input_shape[3][-1]),
+                                    shape=(self.output_dim, input_shape[1][-1]),
+                                    initializer=init,
+                                    trainable=trainable)
+
+        self.WF_t = self.add_weight(name='WF_t',
+                                    shape=(self.d_k, self.d_k),
                                     initializer=init,
                                     trainable=trainable)
         self.WF_a = self.add_weight(name='WF_a',
@@ -155,8 +175,10 @@ class FusionAttention(Layer):
         super(FusionAttention, self).build(input_shape)
 
     def call(self, x):
-        q_a, k_a, v_a, q_t, k_t, v_t = x
-        #(?,50,64), (?,50,200)
+        a, t = x
+        q_a, k_a, v_a = a, a, a
+        q_t, k_t, v_t = t, t, t
+
         # q, k, v layers for text and audio branch
         q_a = K.dot(q_a, self.WQ_a)    # （?，50，64）
         k_a = K.dot(k_a, self.WK_a)
@@ -181,17 +203,17 @@ class FusionAttention(Layer):
         v_t = K.permute_dimensions(v_t, (0, 2, 1, 3))
 
         # fusion factor for k_a and k_t
-        k_a = K.reshape(k_a, (-1, K.shape(k_a)[2], self.d_k))#(?*50,4,16)
+        k_a = K.reshape(k_a, (-1, K.shape(k_a)[2], self.d_k))
         k_t = K.reshape(k_t, (-1, K.shape(k_t)[2], self.d_k))
-        #k_a = K.dot(k_a, self.WF_a) + K.dot(k_t, self.WF_a)
-        #k_t = K.dot(k_a, self.WF_t) + K.dot(k_t, self.WF_t)
-        k_a = k_a + K.dot(k_t, self.WF_a)#(?*50,4,16)
-        k_t = k_t + K.dot(k_a, self.WF_t)#(?*50,4,16)
-        k_a = K.reshape(k_a, (-1, self.n_head, K.shape(k_a)[1], self.d_k))#(?,4,50,16)
+        # k_a = K.dot(k_a, self.WF_a) + K.dot(k_t, self.WF_a)
+        # k_t = K.dot(k_a, self.WF_t) + K.dot(k_t, self.WF_t)
+        k_a = k_a + K.dot(k_t, self.WF_a)
+        k_t = k_t + K.dot(k_a, self.WF_t)
+        k_a = K.reshape(k_a, (-1, self.n_head, K.shape(k_a)[1], self.d_k))
         k_t = K.reshape(k_t, (-1, self.n_head, K.shape(k_t)[1], self.d_k))
 
         # attention
-        score_a = K.batch_dot(q_a, k_a, axes=[3, 3]) / self.d_k ** 0.5#(?,4,50,50)
+        score_a = K.batch_dot(q_a, k_a, axes=[3, 3]) / self.d_k ** 0.5
         score_a = K.softmax(score_a)
         o_a = K.batch_dot(score_a, v_a, axes=[3, 2])
         score_t = K.batch_dot(q_t, k_t, axes=[3, 3]) / self.d_k ** 0.5
@@ -205,11 +227,10 @@ class FusionAttention(Layer):
         o_t = K.reshape(o_t, [-1, K.shape(o_t)[1], self.output_dim])
 
         # dense layer
-        o_a = K.dot(o_a, self.WO_a)
-        o_t = K.dot(o_t, self.WO_t)
+        output_a = K.dot(o_a, self.WO_a)
+        output_t = K.dot(o_t, self.WO_t)
 
-        return [o_a, o_t]
+        return [output_a, output_t]
 
     def compute_output_shape(self, input_shape):
-        # return [(input_shape[0]), (input_shape[0])]
-        return [(input_shape[0]), (input_shape[3])]
+        return [(input_shape[1]), (input_shape[1])]
