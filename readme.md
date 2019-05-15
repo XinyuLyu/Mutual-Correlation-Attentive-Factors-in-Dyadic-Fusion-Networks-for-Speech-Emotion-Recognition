@@ -1,10 +1,9 @@
 ## ACM Multimedia 2019  
-Here is just a demo of our research program.
-Our contribution includes:
-1. A high-efficiency multimodal network that extracts the word-level textual and acoustic features only rely on multi-level attention mechanism and without using any convolutional neural networks and recurrent neural networks.
-2. A hybrid architecture that combines the feature extraction module and fusion module into a single network, which uses two independent fusion factors to learn the across-modality associations in each attention layer during feature extraction.
-3. An end-to-end modeling strategy that synchronizes feature representation and modality fusion, and extremely facilitates model training. 
-
+Here is just a demo of our research program. Our contribution includes:
+1. Instead of using a recurrent neural network to extract temporal associations as in most previous research, we introduce multiple sub-view attention layers to compute the relevant dependencies among sequential utterances; this significantly improves model efficiency.   
+2. To improve fusion performance, we design a learnable mutual correlation factor inside each attention layer to compute associations across different modalities.   
+3. To overcome the label disagreement issue, we embed the labels from all annotators into a k-dimensional vector and transform the categorical problem into a regression problem; this method provides more accurate annotation information and fully uses the entire dataset.  
+   We evaluate the proposed model on two published multimodal emotion recognition datasets: IEMOCAP and MELD. Our model significantly outperforms previous state-of-the-art research by 3.8%-7.5% accuracy, using a more efficient model.  
 ### Dataset: IEMOCAP DATABASE
 https://sail.usc.edu/iemocap/
 
@@ -17,30 +16,32 @@ https://sail.usc.edu/iemocap/
   6. scipy 1.1.0
 * Hardware:
   1. Our model was trained on a GTX 1080 GPU with 32GB RAM.
+  
 * Codes: 
 
-  1. word2vec.py: Help to extract texture features.
+  1. attention.py: Modality Fusion with Mutual Correlation Attentive Factor.
 
-  4. DataLoader_hybrid.py : Help load/save audio/text/label data to the hybrid model.
-  
-  5. Self_attention_hybrid.py: Define self-attention layer, combining the feature extraction module and fusion module into a single network.
+  2. model.py : the hybrid model.
 
-* Models:
-
-  1. final model: fusion model
-
-  2. audio model: audio branch model
-    
-  3. text audio: texture model.
-
-* data:
-
-  1. audio: For audio data takes up 7 GB, we just put some samples in the filder.
-
-  2. label_output_new.txt : The emotion labels for dataset.
-
-  3. text_output_new.txt : Texture data. 
-
-  4. glove.6B.50d: The embedding matrix for texture features. Actually, we use glove.6B.200d, but it is too large to put here.
-
-  For the audio dataset is too large, we can't provide a demo for you to make. We have included our test results in the report with the models included in this folder. And if you have any questions about the project, please be free to email us.
+* data:  
+For this study, we only use audio and text data. The dataset consists of 10039 utterances from 151 dialogs and contains 10 categories including ‘neutral’, ‘exciting’, ‘sadness’, ‘frustration’, ‘happiness’, ‘angry’, ‘other’, ‘surprised’, ‘disgust’, and ‘fear’. 
+  1. label:  For each utterance, we include the labels from all annotators and embed it as a 10-dimensional vector. 
+  2. We follow previous research to split the data into training, validation, and testing sets at the session level. 
+  3. The split considers the speakers independent. The final dataset has 3 sessions for training, 1 session for validation, and 1 session for testing.
+     (dev means validation dataset, test means test dataset, train means train dataset)
+     
+* model:
+We provide a trained model, with the results shown below.  
+acc:0.4951267056530214  
+final result:   
+{'9': 7, '7': 19, '0': 258, '8': 0, '3': 481, '5': 327, '4': 65, '1': 238, '2': 143, '6': 1}  
+0 {'9': 0, '7': 0, '0': 60, '8': 0, '3': 91, '5': 5, '4': 41, '1': 54, '2': 7, '6': 0}  
+1 {'9': 0, '7': 0, '0': 10, '8': 0, '3': 8, '5': 0, '4': 67, '1': 152, '2': 1, '6': 0}  
+2 {'9': 0, '7': 0, '0': 10, '8': 0, '3': 30, '5': 1, '4': 2, '1': 2, '2': 98, '6': 0}  
+3 {'9': 0, '7': 0, '0': 111, '8': 0, '3': 319, '5': 23, '4': 2, '1': 11, '2': 15, '6': 0}  
+4 {'9': 0, '7': 0, '0': 4, '8': 0, '3': 3, '5': 0, '4': 23, '1': 33, '2': 2, '6': 0}  
+5 {'9': 0, '7': 0, '0': 35, '8': 0, '3': 164, '5': 110, '4': 4, '1': 8, '2': 6, '6': 0}  
+6 {'9': 0, '7': 0, '0': 0, '8': 0, '3': 1, '5': 0, '4': 0, '1': 0, '2': 0, '6': 0}  
+7 {'9': 0, '7': 0, '0': 5, '8': 0, '3': 8, '5': 0, '4': 2, '1': 3, '2': 1, '6': 0}  
+8 {'9': 0, '7': 0, '0': 0, '8': 0, '3': 0, '5': 0, '4': 0, '1': 0, '2': 0, '6': 0}  
+9 {'9': 0, '7': 0, '0': 3, '8': 0, '3': 0, '5': 0, '4': 0, '1': 4, '2': 0, '6': 0}  
