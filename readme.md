@@ -1,4 +1,5 @@
 ## ACM Multimedia 2019  
+## Mutual Correlation Attentive Factors in Dyadic Fusion Networks for Speech Emotion Recognition 
 Here is just a demo of our research program. Our contribution includes:
 1. Instead of using a recurrent neural network to extract temporal associations as in most previous research, we introduce multiple sub-view attention layers to compute the relevant dependencies among sequential utterances; this significantly improves model efficiency.   
 2. To improve fusion performance, we design a learnable mutual correlation factor inside each attention layer to compute associations across different modalities.   
