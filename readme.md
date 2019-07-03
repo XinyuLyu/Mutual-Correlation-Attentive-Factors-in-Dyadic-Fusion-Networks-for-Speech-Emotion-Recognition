@@ -1,6 +1,5 @@
-## Mutual Correlation Attentive Factors in Dyadic Fusion Networks for Speech Emotion Recognition  
-Yue Gu, Xinyu Lyu, Weijia Sun, Weitian Li, Shuhong Chen, Xinyu Li and Ivan Marsic
-### Paper has been accepted by ACMMM 2019! June, 2nd, 2019 
+## Mutual Correlation Attentive Factors in Dyadic Fusion Networks for Speech Emotion Recognition  （accepted by ACMMM 2019）
+Yue Gu, Xinyu Lyu, Weijia Sun, Weitian Li, Shuhong Chen, Xinyu Li and Ivan Marsic  
 Here is just a demo of our research program. Our contribution includes:
 1. Instead of using a recurrent neural network to extract temporal associations as in most previous research, we introduce multiple sub-view attention layers to compute the relevant dependencies among sequential utterances; this significantly improves model efficiency.   
 2. To improve fusion performance, we design a learnable mutual correlation factor inside each attention layer to compute associations across different modalities.   
@@ -32,12 +31,12 @@ For this study, we only use audio and text data. The dataset consists of 10039 u
   3. The split considers the speakers independent. The final dataset has 3 sessions for training, 1 session for validation, and 1 session for testing.
      (dev means validation dataset, test means test dataset, train means train dataset)
      
-* model:
-We provide a trained model, with the results shown below. Run model.py in codes dir loaded the model from model dir to test the results.   
-Test data distribution('category':number):
+* model:  
+   1. We provide a trained model, with the results shown below. Run model.py in codes dir loaded the model from model dir to test the results.   
+   2. Test data distribution('category':number):
 {'9': 7, '7': 19, '0': 258, '8': 0, '3': 481, '5': 327, '4': 65, '1': 238, '2': 143, '6': 1}   
 ([0-9] categories represents [‘neutral’, ‘exciting’, ‘sadness’, ‘frustration’, ‘happiness’, ‘angry’, ‘other’, ‘surprised’, ‘disgust’, ‘fear’] emotions)  
-Test result:   
+   3. Test result:   
 0 {'9': 0, '7': 0, '0': 60, '8': 0, '3': 91, '5': 5, '4': 41, '1': 54, '2': 7, '6': 0}  
 1 {'9': 0, '7': 0, '0': 10, '8': 0, '3': 8, '5': 0, '4': 67, '1': 152, '2': 1, '6': 0}  
 2 {'9': 0, '7': 0, '0': 10, '8': 0, '3': 30, '5': 1, '4': 2, '1': 2, '2': 98, '6': 0}  
