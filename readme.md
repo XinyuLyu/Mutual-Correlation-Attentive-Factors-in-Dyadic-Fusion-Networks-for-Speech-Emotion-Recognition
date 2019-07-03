@@ -1,6 +1,6 @@
 ## Mutual Correlation Attentive Factors in Dyadic Fusion Networks for Speech Emotion Recognition  （accepted by ACMMM 2019）
 Yue Gu, Xinyu Lyu, Weijia Sun, Weitian Li, Shuhong Chen, Xinyu Li and Ivan Marsic  
-Here is just a demo of our research program. Our contribution includes:
+### Our contribution includes:
 1. Instead of using a recurrent neural network to extract temporal associations as in most previous research, we introduce multiple sub-view attention layers to compute the relevant dependencies among sequential utterances; this significantly improves model efficiency.   
 2. To improve fusion performance, we design a learnable mutual correlation factor inside each attention layer to compute associations across different modalities.   
 3. To overcome the label disagreement issue, we embed the labels from all annotators into a k-dimensional vector and transform the categorical problem into a regression problem; this method provides more accurate annotation information and fully uses the entire dataset.  
@@ -8,30 +8,30 @@ Here is just a demo of our research program. Our contribution includes:
 
 ### Dataset: IEMOCAP DATABASE
 
-* Environments:
+### Environments:
   1. Python 3.6
   2. Keras 2.0.9
   3. TensorFlow 1.3.0
   4. sklearn 0.19.1
   5. numpy 1.15.3
   6. scipy 1.1.0
-* Hardware:
+### Hardware:
   1. Our model was trained on a GTX 1080 GPU with 32GB RAM.
   
-* Codes: 
+### Codes: 
 
   1. attention.py: Modality Fusion with Mutual Correlation Attentive Factor.
 
   2. model.py : the hybrid model.
 
-* data:  
+### Data:  
 For this study, we only use audio and text data. The dataset consists of 10039 utterances from 151 dialogs and contains 10 categories including ‘neutral’, ‘exciting’, ‘sadness’, ‘frustration’, ‘happiness’, ‘angry’, ‘other’, ‘surprised’, ‘disgust’, and ‘fear’. 
   1. label:  For each utterance, we include the labels from all annotators and embed it as a 10-dimensional vector. 
   2. We follow previous research to split the data into training, validation, and testing sets at the session level. 
   3. The split considers the speakers independent. The final dataset has 3 sessions for training, 1 session for validation, and 1 session for testing.
      (dev means validation dataset, test means test dataset, train means train dataset)
      
-* model:  
+### Model:  
    1. We provide a trained model, with the results shown below. Run model.py in codes dir loaded the model from model dir to test the results.   
    2. Test data distribution('category':number):
 {'9': 7, '7': 19, '0': 258, '8': 0, '3': 481, '5': 327, '4': 65, '1': 238, '2': 143, '6': 1}   
