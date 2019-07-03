@@ -1,12 +1,13 @@
-## Mutual Correlation Attentive Factors in Dyadic Fusion Networks for Speech Emotion Recognition (ACM Multimedia 2019)
+## Mutual Correlation Attentive Factors in Dyadic Fusion Networks for Speech Emotion Recognition  
+Yue Gu, Xinyu Lyu, Weijia Sun, Weitian Li, Shuhong Chen, Xinyu Li and Ivan Marsic
 ### Paper has been accepted by ACMMM 2019! June, 2nd, 2019 
 Here is just a demo of our research program. Our contribution includes:
 1. Instead of using a recurrent neural network to extract temporal associations as in most previous research, we introduce multiple sub-view attention layers to compute the relevant dependencies among sequential utterances; this significantly improves model efficiency.   
 2. To improve fusion performance, we design a learnable mutual correlation factor inside each attention layer to compute associations across different modalities.   
 3. To overcome the label disagreement issue, we embed the labels from all annotators into a k-dimensional vector and transform the categorical problem into a regression problem; this method provides more accurate annotation information and fully uses the entire dataset.  
    We evaluate the proposed model on two published multimodal emotion recognition datasets: IEMOCAP and MELD. Our model significantly outperforms previous state-of-the-art research by 3.8%-7.5% accuracy, using a more efficient model.  
+
 ### Dataset: IEMOCAP DATABASE
-https://sail.usc.edu/iemocap/
 
 * Environments:
   1. Python 3.6
@@ -32,10 +33,11 @@ For this study, we only use audio and text data. The dataset consists of 10039 u
      (dev means validation dataset, test means test dataset, train means train dataset)
      
 * model:
-We provide a trained model, with the results shown below.  
-acc:0.4951267056530214  
-final result:   
-{'9': 7, '7': 19, '0': 258, '8': 0, '3': 481, '5': 327, '4': 65, '1': 238, '2': 143, '6': 1}  
+We provide a trained model, with the results shown below. Run model.py in codes dir loaded the model from model dir to test the results.   
+Test data distribution('category':number):
+{'9': 7, '7': 19, '0': 258, '8': 0, '3': 481, '5': 327, '4': 65, '1': 238, '2': 143, '6': 1}   
+([0-9] categories represents [‘neutral’, ‘exciting’, ‘sadness’, ‘frustration’, ‘happiness’, ‘angry’, ‘other’, ‘surprised’, ‘disgust’, ‘fear’] emotions)  
+Test result:   
 0 {'9': 0, '7': 0, '0': 60, '8': 0, '3': 91, '5': 5, '4': 41, '1': 54, '2': 7, '6': 0}  
 1 {'9': 0, '7': 0, '0': 10, '8': 0, '3': 8, '5': 0, '4': 67, '1': 152, '2': 1, '6': 0}  
 2 {'9': 0, '7': 0, '0': 10, '8': 0, '3': 30, '5': 1, '4': 2, '1': 2, '2': 98, '6': 0}  
@@ -46,3 +48,4 @@ final result:
 7 {'9': 0, '7': 0, '0': 5, '8': 0, '3': 8, '5': 0, '4': 2, '1': 3, '2': 1, '6': 0}  
 8 {'9': 0, '7': 0, '0': 0, '8': 0, '3': 0, '5': 0, '4': 0, '1': 0, '2': 0, '6': 0}  
 9 {'9': 0, '7': 0, '0': 3, '8': 0, '3': 0, '5': 0, '4': 0, '1': 4, '2': 0, '6': 0}  
+Total accuracy : 0.4951267056530214    
