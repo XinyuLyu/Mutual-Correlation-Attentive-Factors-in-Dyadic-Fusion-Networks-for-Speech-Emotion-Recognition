@@ -6,7 +6,7 @@ Yue Gu, Xinyu Lyu, Weijia Sun, Weitian Li, Shuhong Chen, Xinyu Li and Ivan Marsi
 3. To overcome the label disagreement issue, we embed the labels from all annotators into a k-dimensional vector and transform the categorical problem into a regression problem; this method provides more accurate annotation information and fully uses the entire dataset.  
    We evaluate the proposed model on two published multimodal emotion recognition datasets: IEMOCAP and MELD. Our model significantly outperforms previous state-of-the-art research by 3.8%-7.5% accuracy, using a more efficient model.  
 
-### Dataset: IEMOCAP DATABASE
+### Dataset: IEMOCAP   
 
 ### Environments:
   1. Python 3.6
