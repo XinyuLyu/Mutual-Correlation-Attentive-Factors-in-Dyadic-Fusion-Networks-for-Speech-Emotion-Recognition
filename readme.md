@@ -1,10 +1,9 @@
-## Mutual Correlation Attentive Factors in Dyadic Fusion Networks for Speech Emotion Recognition  （accepted by ACMMM 2019， oral）
+## Mutual Correlation Attentive Factors in Dyadic Fusion Networks for Speech Emotion Recognition  ACMMM 2019(oral)
 Yue Gu, Xinyu Lyu, Weijia Sun, Weitian Li, Shuhong Chen, Xinyu Li and Ivan Marsic  
 ### Our contribution includes:
 1. Instead of using a recurrent neural network to extract temporal associations as in most previous research, we introduce multiple sub-view attention layers to compute the relevant dependencies among sequential utterances; this significantly improves model efficiency.   
-https://github.com/XinyuLyu/Sentiment-Analysis/blob/hybrid_branch/paper/Dyadic%20fusion%20network.png
-![models](paper/Dyadic%20fusion%20network.png)
 2. To improve fusion performance, we design a learnable mutual correlation factor inside each attention layer to compute associations across different modalities.   
+![MCAF](paper/Mutual%20correlation%20attentive%20factors%20(MCAF)%20in%20sub-view%20attention%20for%20modality%20fusion.png)
 3. To overcome the label disagreement issue, we embed the labels from all annotators into a k-dimensional vector and transform the categorical problem into a regression problem; this method provides more accurate annotation information and fully uses the entire dataset.  
    We evaluate the proposed model on two published multimodal emotion recognition datasets: IEMOCAP and MELD. Our model significantly outperforms previous state-of-the-art research by 3.8%-7.5% accuracy, using a more efficient model.  
 
